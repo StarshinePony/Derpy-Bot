@@ -1,6 +1,10 @@
-
 __pycache__
+.vscode
+notes.txt
 .env
+downloads
+
+.gitignore
 economy.db
 economytimer.db
 items.db
