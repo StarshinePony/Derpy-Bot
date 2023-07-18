@@ -9,7 +9,7 @@ class fun(commands.Cog):
         self.bot = bot
 
 
-    @commands.command(name="manebooru", description = "Search for pictures on Manebooru")
+    @commands.command(name="manebooru", help = "Search for pictures on Manebooru")
     async def manebooru(self, ctx, search_query: str):
         url = f'https://manebooru.art/api/v1/json/search/images?q={search_query}'
 
@@ -28,7 +28,7 @@ class fun(commands.Cog):
         else:
             await ctx.send('Error occured while searching for pictures')
 
-    @commands.command(name="derpybooru", description = "Search for pictures on Derpybooru")
+    @commands.command(name="derpybooru", help = "Search for pictures on Derpybooru")
     async def derpybooru(self, ctx, search_query: str):
         url = f'https://derpibooru.org/api/v1/json/search/images?q={search_query}'
 
@@ -48,7 +48,7 @@ class fun(commands.Cog):
             await ctx.send('Error occured while searching for pictures')
 
        
-    @commands.command(name="echo", description = "Let the bot say something in a given channel")
+    @commands.command(name="echo", help = "Let the bot say something in a given channel")
     @commands.has_permissions(kick_members = True)
     async def echo(self, ctx, channel: discord.TextChannel, message):
         await channel.send(message)

@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 # Get the API token from the .env file.
 DISCORD_TOKEN = os.getenv("discord_token")
+authserver = os.getenv("authserver")
 
 #import all of the cogs
 from modules.music import music
@@ -29,7 +30,7 @@ async def on_ready():
     await bot.add_cog(fun(bot))
     await bot.add_cog(warn(bot))
     await bot.add_cog(economy(bot))
-    await bot.tree.sync(guild = discord.Object(id=1128216325341331506))
+    await bot.tree.sync(guild = discord.Object(id=authserver))
     print("Bot is ready")
 
     

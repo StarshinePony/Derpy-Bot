@@ -3,12 +3,16 @@ from discord.ext import commands
 import discord
 import random
 import asyncio
+import os
 import sqlite3
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import dateutil.parser
+load_dotenv()
 
 class economy(commands.Cog):
+    authserver = os.getenv("authserver")
+    developerid = os.getenv("developerid")
     def __init__(self, bot):
         self.bot = bot
    
@@ -104,8 +108,8 @@ class economy(commands.Cog):
         self.db_connection_worktime.commit()
 
 
-    @commands.hybrid_command(name="additem", with_app_command= True, help = "Adds a new Items globaly")
-    @app_commands.guilds(discord.Object(id=1128216325341331506))
+    @commands.hybrid_command(name="additem", with_app_command= True, help = "Adds a new Item globaly")
+    @app_commands.guilds(discord.Object(id=authserver))
     async def additem(self, ctx, *, name: str, price: int):
         user_id = ctx.author.id
         if user_id == 1014344645020495942:
@@ -121,7 +125,7 @@ class economy(commands.Cog):
 
 
 
-    @commands.command(name="removeitem", description = "Removes items globaly")
+    @commands.command(name="removeitem", help = "Removes items globaly")
     async def removeitem(self, ctx, *, id = None):
         user_id = ctx.author.id
         if user_id == 1014344645020495942:
@@ -130,7 +134,7 @@ class economy(commands.Cog):
                 results = self.db_cursor_items.execute(query).fetchall()
         
             
-                embed = discord.Embed(title="IDs", description="Verfügbare Item Ids:", color=discord.Color.red())
+                embed = discord.Embed(title="IDs", description="Available item ids:", color=discord.Color.red())
 
                 for row in results:
                     id = row["id"]
@@ -149,7 +153,7 @@ class economy(commands.Cog):
         else:
             await ctx.send(f"Only the developer can run this command")
 
-    @commands.command(name="ecogive", description = "Gives a user money")
+    @commands.command(name="ecogive", help = "Gives a user money")
     @commands.has_permissions(kick_members = True)
     async def ecogive(self, ctx, *, member: discord.Member, money: int):
         member_id = member.id
@@ -175,7 +179,7 @@ class economy(commands.Cog):
             await ctx.send(f"{money} bits has been given to {member.mention}")
     
 
-    @commands.command(name="worktimer", description = "Sets the work time in minutes")
+    @commands.command(name="worktimer", help = "Sets the work time in minutes")
     async def worktimer(self, ctx, *, worktime=None):
         server_id = ctx.guild.id
 
@@ -202,7 +206,7 @@ class economy(commands.Cog):
                 await ctx.send(f"Worktime was set to {worktime} minutes")
 
 
-    @commands.command(name="work", description = "You can work every hour")
+    @commands.command(name="work", help = "You can work every hour")
     async def work(self, ctx):
         user_id = ctx.author.id
         server_id = ctx.guild.id
@@ -304,7 +308,7 @@ class economy(commands.Cog):
 
             await ctx.send(f"Work was succesful! (+{geld} Bits!) Your bits: {money} Bits")
 
-    @commands.command(name="money", description = "Your money")
+    @commands.command(name="money", help = "Your money")
     async def money(self, ctx, member: discord.Member = None):
         server_id = ctx.guild.id
         if member == None:
@@ -329,7 +333,7 @@ class economy(commands.Cog):
                 await ctx.send(f"{member.mention} doesn't have any Bits")
 
 
-    @commands.command(name="shop", description = "Shows the shop")
+    @commands.command(name="shop", help = "Shows the shop")
     async def shop(self, ctx):
         query = "SELECT * FROM items"
         results = self.db_cursor_items.execute(query).fetchall()
@@ -347,7 +351,7 @@ class economy(commands.Cog):
         else:
             await ctx.send("There aren't any items in the shop")
 
-    @commands.command(name="removemoney", description = "Remove money from a user")
+    @commands.command(name="removemoney", help = "Remove money from a user")
     @commands.has_permissions(kick_members = True)
     async def removemoney(self, ctx, member: discord.Member, bits: int):
         server_id = ctx.guild.id
@@ -371,7 +375,7 @@ class economy(commands.Cog):
 
 
 
-    @commands.command(name="pay", description = "Pay a user some bits")
+    @commands.command(name="pay", help = "Pay a user some bits")
     async def pay(self, ctx, member: discord.Member, bits: int):
         server_id = ctx.guild.id
         user_id = ctx.author.id
@@ -416,7 +420,7 @@ class economy(commands.Cog):
 
 
 
-    @commands.command(name="buy", description = "Buy an item")
+    @commands.command(name="buy", help = "Buy an item")
     async def buy(self, ctx, name: str):
         server_id = ctx.guild.id
 
@@ -460,7 +464,7 @@ class economy(commands.Cog):
             await ctx.send(f"The item '{name}' is not available")
 
 
-    @commands.command(name="use", description = "Buy an item")
+    @commands.command(name="use", help = "Buy an item")
     async def use_item(self, ctx, item_name, member: discord.Member = None):
         server_id = ctx.guild.id
         #    Überprüfe, ob der Benutzer das Item besitzt
@@ -499,7 +503,7 @@ class economy(commands.Cog):
 
 
 
-    @commands.command(name="inventory", description = "Your inventory")
+    @commands.command(name="inventory", help = "Your inventory")
     async def inventory(self, ctx, member: discord.Member = None):
         if member == None:
             user_id = ctx.author.id

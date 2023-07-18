@@ -49,7 +49,7 @@ class warn(commands.Cog):
         self.db_cursor_warnings.execute(query)
         self.db_connection_warnings.commit()
 
-    @commands.command(name="warn", description = "Warn a Member")
+    @commands.command(name="warn", help = "Warn a Member")
     @commands.has_permissions(kick_members = True)
     async def warn(self, ctx, member: discord.Member, *, reason: str):
         server_id = ctx.guild.id
@@ -68,7 +68,7 @@ class warn(commands.Cog):
 
         if num_warnings >= 3:
             await ctx.guild.kick(member, reason="3 warns reached")
-    @commands.command(name="listwarns", description = "Get a list of the warns from a user")
+    @commands.command(name="listwarns", help = "Get a list of the warns from a user")
     @commands.has_permissions(kick_members = True)
     async def listwarns(self, ctx, member: discord.Member):
         server_id = ctx.guild.id
@@ -119,7 +119,7 @@ class warn(commands.Cog):
         result = self.db_cursor_warnings.execute(query, values).fetchone()
         return result[0]
 
-    @commands.command(name="logchannel", description = "Setup command for logs")
+    @commands.command(name="logchannel", help = "Setup command for logs")
     @commands.has_permissions(kick_members = True)
     async def logchannel(self, ctx, *, channel: discord.TextChannel):
         server_id = ctx.guild.id
@@ -143,7 +143,7 @@ class warn(commands.Cog):
 
         await ctx.send(log_message)
 
-    @commands.command(name="delwarns", description = "Delete the warns of a user")
+    @commands.command(name="delwarns", help = "Delete the warns of a user")
     @commands.has_permissions(kick_members = True)
     async def delwarns(self, ctx, member: discord.Member):
         server_id = ctx.guild.id
