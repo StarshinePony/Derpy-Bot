@@ -1,5 +1,6 @@
 
 __pycache__
+.env
 economy.db
 economytimer.db
 items.db
