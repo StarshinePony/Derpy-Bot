@@ -26,6 +26,4 @@ wrapt
 yarl==1.8.2
 yt-dlp
 requests
-
-
-
+dotenv
