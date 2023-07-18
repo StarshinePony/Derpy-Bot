@@ -70,8 +70,7 @@ class music(commands.Cog):
         else:
             self.is_playing = False
 
-    @commands.hybrid_command(name="play", with_app_command=True, help="Plays a selected song from youtube")
-    @app_commands.guilds(discord.Object(id=1128216325341331506))
+    @commands.command(name="play", help="Plays a selected song from youtube")
     async def play(self, ctx, *, songtitle):
         query = " ".join(songtitle)
         
