@@ -18,10 +18,7 @@ bot = commands.Bot(command_prefix='$', intents=intents)
 
 
 #remove the default help command so that we can write out own
-@bot.command(name="sync", help = "Sync the commands to your server")
-async def sync(ctx, *, guildid: int):
-    await bot.tree.sync(guild = discord.Object(id=guildid))
-    await ctx.send("Synced!")
+
 
 #register the class with the bot
 @bot.event
