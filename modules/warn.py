@@ -152,10 +152,11 @@ class warn(commands.Cog):
         self.db_connection_warnings.commit()
         await ctx.send(f"Warnings of {member.mention} got deleted")
 
+    
     async def check_expired_warnings(self):
         while True:
             server_ids = set()
-
+        
 
             query = "SELECT * FROM warnings WHERE expiration <= ?"
             current_time = datetime.now()

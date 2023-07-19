@@ -69,27 +69,31 @@ class music(commands.Cog):
             self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
         else:
             self.is_playing = False
+    
 
     @commands.command(name="play", help="Plays a selected song from youtube")
     async def play(self, ctx, *, songtitle):
-        query = " ".join(songtitle)
-        
-        voice_channel = ctx.author.voice.channel
-        if voice_channel is None:
-            #you need to be connected so that the bot knows where to go
-            await ctx.send("Connect to a voice channel!")
-        elif self.is_paused:
-            self.vc.resume()
+        if songtitle == None:
+            await ctx.send(f"Missing argument songtitle: Usage: play <songtitle>")
         else:
-            song = self.search_yt(query)
-            if type(song) == type(True):
-                await ctx.send("Could not download the song. Incorrect format try another keyword. This could be due to playlist or a livestream format.")
+            query = "".join(songtitle)
+        
+            voice_channel = ctx.author.voice.channel
+            if voice_channel is None:
+                #you need to be connected so that the bot knows where to go
+                await ctx.send("Connect to a voice channel!")
+            elif self.is_paused:
+                self.vc.resume()
             else:
-                await ctx.send("Song added to the queue")
-                self.music_queue.append([song, voice_channel])
+                song = self.search_yt(query)
+                if type(song) == type(True):
+                    await ctx.send("Could not download the song. Incorrect format try another keyword. This could be due to playlist or a livestream format.")
+                else:
+                    await ctx.send("Song added to the queue")
+                    self.music_queue.append([song, voice_channel])
                 
-                if self.is_playing == False:
-                    await self.play_music(ctx)
+                    if self.is_playing == False:
+                        await self.play_music(ctx)
 
     @commands.command(name="pause", help="Pauses the current song being played")
     async def pause(self, ctx, *args):

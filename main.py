@@ -2,6 +2,9 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
+import asyncio
+import sqlite3
+from datetime import datetime, timedelta
 
 load_dotenv()
 # Get the API token from the .env file.
@@ -14,15 +17,23 @@ from modules.fun import fun
 from modules.warn import warn
 from modules.economy import economy
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix='$', intents=intents)
+currentprefix = '%'
+bot = commands.Bot(command_prefix=currentprefix, intents=intents)
 
+@bot.command(name="prefix", help="Change command prefix")
+async def prefix(ctx, newprefix):
+    global currentprefix
+    currentprefix = newprefix
+    await ctx.send(f"```New prefix is '{newprefix}'```")
 
-#remove the default help command so that we can write out own
-@bot.command(name="sync", help = "Sync the commands to your server")
-async def sync(ctx, *, guildid: int):
-    await bot.tree.sync(guild = discord.Object(id=guildid))
-    await ctx.send("Synced!")
+def get_custom_prefix(bot, message):
+    return commands.when_mentioned_or(currentprefix)(bot, message)
 
+bot.command_prefix = get_custom_prefix
+class main():
+    global currentprefix
+    def currentprefixs():
+        currentprefix
 #register the class with the bot
 @bot.event
 async def on_ready():
@@ -31,8 +42,10 @@ async def on_ready():
     await bot.add_cog(warn(bot))
     await bot.add_cog(economy(bot))
     await bot.tree.sync(guild = discord.Object(id=authserver))
+    await bot.loop.create_task(economy(bot).check_expired_worktimers())
+    await bot.loop.create_task(warn(bot).check_expired_warnings())
     print("Bot is ready")
-
+    
     
 
     

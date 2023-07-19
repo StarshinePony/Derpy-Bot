@@ -528,3 +528,26 @@ class economy(commands.Cog):
             await ctx.send(embed=embed)
         else:
             await ctx.send("Your inventory is empty")
+
+   
+
+
+
+    async def check_expired_worktimers(self):
+        while True:
+            server_ids = set()
+        
+
+            query = "SELECT * FROM economytimer WHERE expiration <= ?"
+            current_time = datetime.now()
+            expired_timers = self.db_cursor_economytimer.execute(query, (current_time,)).fetchall()
+
+            for economytimer in expired_timers:
+                server_id = economytimer["server_id"]
+                server_ids.add(server_id)
+                timer_id = economytimer["id"]
+                delete_query = "DELETE FROM economytimer WHERE id = ?"
+                self.db_cursor_economytimer.execute(delete_query, (timer_id,))
+                self.db_connection_economytimer.commit()
+                print(f"The id '{timer_id}' finished working")
+            await asyncio.sleep(5)
