@@ -6,6 +6,8 @@
  SETUP:
 1. Clone the repo on your device
 2. Create a .env file and add these lines of information:
+
+
     discord_token = "YOUR BOT TOKEN"
 
    
@@ -13,6 +15,7 @@
 
    
     developerid = YOUR USER ID
+   
 4. optionally deploy the repo to your server
 5. if you want to run it on your home device run the command: pip install -r requirements.txt
 6. start thebot with python main.py
