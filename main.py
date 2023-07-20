@@ -28,6 +28,10 @@ async def prefix(ctx, newprefix):
 
 def get_custom_prefix(bot, message):
     return commands.when_mentioned_or(currentprefix)(bot, message)
+    
+@bot.command(name="test", help="test")
+async def test(ctx):
+    await ctx.send("test")
 
 bot.command_prefix = get_custom_prefix
 class main():
