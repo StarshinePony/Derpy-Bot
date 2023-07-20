@@ -85,6 +85,7 @@ class music(commands.Cog):
             elif self.is_paused:
                 self.vc.resume()
             else:
+                # UNTESTED | async ctx.typing():
                 song = self.search_yt(query)
                 if type(song) == type(True):
                     await ctx.send("Could not download the song. Incorrect format try another keyword. This could be due to playlist or a livestream format.")
