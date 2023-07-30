@@ -8,3 +8,4 @@ settings.db
 user_items.db
 warnings.db
 worktime.db
+test.py

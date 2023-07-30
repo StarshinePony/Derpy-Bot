@@ -16,28 +16,11 @@ from modules.music import music
 from modules.fun import fun
 from modules.warn import warn
 from modules.economy import economy
+from modules.spam import spam
 intents = discord.Intents.all()
-currentprefix = '%'
+currentprefix = 'v!'
 bot = commands.Bot(command_prefix=currentprefix, intents=intents)
 
-@bot.command(name="prefix", help="Change command prefix")
-async def prefix(ctx, newprefix):
-    global currentprefix
-    currentprefix = newprefix
-    await ctx.send(f"```New prefix is '{newprefix}'```")
-
-def get_custom_prefix(bot, message):
-    return commands.when_mentioned_or(currentprefix)(bot, message)
-    
-@bot.command(name="test", help="test")
-async def test(ctx):
-    await ctx.send("test")
-
-bot.command_prefix = get_custom_prefix
-class main():
-    global currentprefix
-    def currentprefixs():
-        currentprefix
 #register the class with the bot
 @bot.event
 async def on_ready():
@@ -45,13 +28,26 @@ async def on_ready():
     await bot.add_cog(fun(bot))
     await bot.add_cog(warn(bot))
     await bot.add_cog(economy(bot))
+    await bot.add_cog(spam(bot))
     await bot.tree.sync(guild = discord.Object(id=authserver))
     await bot.loop.create_task(economy(bot).check_expired_worktimers())
     await bot.loop.create_task(warn(bot).check_expired_warnings())
-    print("Bot is ready")
-    
-    
 
+    
+    
+@bot.event
+async def on_message(message):
+    # Ignore messages sent by bots to avoid command loops
+    if message.author.bot:
+        return
+
+    # Process commands in DM channels but do not add entries to the spam counter.
+    if isinstance(message.channel, discord.DMChannel):
+        await bot.process_commands(message)
+        return
+
+    # Process commands in guild channels
+    await bot.process_commands(message)
     
 
 #start the bot with our token

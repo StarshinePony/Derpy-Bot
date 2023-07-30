@@ -3,6 +3,7 @@ from discord import app_commands
 import discord
 from discord.ext import commands
 from yt_dlp import YoutubeDL
+import asyncio
 
 
 class music(commands.Cog):
@@ -148,3 +149,19 @@ class music(commands.Cog):
         self.is_playing = False
         self.is_paused = False
         await self.vc.disconnect()
+
+    async def check_idle_and_leave(self):
+        while True:
+            # Get the current voice client
+            voice_client = self.voice_clients[0] if self.voice_clients else None
+
+            # Check if the voice client is not None (i.e., bot is in a voice channel)
+            # and if it has been idle for 5 minutes (300 seconds)
+            if voice_client and voice_client.is_playing():
+                await asyncio.sleep(300)  # Wait for 5 minutes
+            else:
+                # The bot has been idle for 5 minutes, so leave the voice channel
+                if voice_client:
+                    await self.vc.disconnect()
+                    print("Bot left the voice channel due to inactivity.")
+                await asyncio.sleep(60)  # Check again after 1 minute
