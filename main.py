@@ -10,6 +10,7 @@ load_dotenv()
 # Get the API token from the .env file.
 DISCORD_TOKEN = os.getenv("discord_token")
 authserver = os.getenv("authserver")
+developer = os.getenv("developerid")
 
 #import all of the cogs
 from modules.music import music
@@ -36,7 +37,14 @@ async def on_ready():
     await bot.loop.create_task(warn(bot).check_expired_warnings())
     print("Bot is ready!")
 
-    
+@bot.event
+async def on_guild_join(guild):
+    if guild.me == bot.user:
+        for channel in guild.text_channels:
+            if channel.permissions_for(guild.me).send_messages:
+                await channel.send("Thanks for adding Derpy-Bot to your server! "
+                                   "First of all, run the d!setup command to set up all your roles and channels!")
+                break
     
 @bot.event
 async def on_message(message):

@@ -18,6 +18,9 @@ def has_mod_role():
             if mod_role_id:
                 mod_role = discord.utils.get(ctx.guild.roles, id=mod_role_id)
                 return mod_role is not None and mod_role in ctx.author.roles
+        else:
+            await ctx.send("Pls run d!setup first!")
+            
 
         return False
 
