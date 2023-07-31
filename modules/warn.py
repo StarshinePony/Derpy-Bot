@@ -8,12 +8,28 @@ import sqlite3
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import dateutil.parser
+import json
+def has_mod_role():
+    async def predicate(ctx):
+        # Load the setup data from JSON file
+        with open('setup_data.json', 'r') as file:
+            setup_data = json.load(file)
 
+        guild_id = ctx.guild.id
+        setup_info = setup_data.get(str(guild_id))
+
+        if setup_info:
+            mod_role_id = setup_info.get("mod_role_id")
+            if mod_role_id:
+                mod_role = discord.utils.get(ctx.guild.roles, id=mod_role_id)
+                return mod_role is not None and mod_role in ctx.author.roles
+
+        return False
+
+    return commands.check(predicate)
 class warn(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
-    
-        
+        self.bot = bot  
         self.db_connection_settings = sqlite3.connect("settings.db")
         self.db_connection_settings.row_factory = sqlite3.Row
         self.db_cursor_settings = self.db_connection_settings.cursor()
@@ -48,9 +64,8 @@ class warn(commands.Cog):
         """
         self.db_cursor_warnings.execute(query)
         self.db_connection_warnings.commit()
-
     @commands.command(name="warn", help = "Warn a Member")
-    @commands.has_permissions(kick_members = True)
+    @has_mod_role()
     async def warn(self, ctx, member: discord.Member, *, reason: str):
         server_id = ctx.guild.id
 
@@ -69,7 +84,7 @@ class warn(commands.Cog):
         if num_warnings >= 3:
             await ctx.guild.kick(member, reason="3 warns reached")
     @commands.command(name="listwarns", help = "Get a list of the warns from a user")
-    @commands.has_permissions(kick_members = True)
+    @has_mod_role()
     async def listwarns(self, ctx, member: discord.Member):
         server_id = ctx.guild.id
 
@@ -120,7 +135,7 @@ class warn(commands.Cog):
         return result[0]
 
     @commands.command(name="logchannel", help = "Setup command for logs")
-    @commands.has_permissions(kick_members = True)
+    @has_mod_role()
     async def logchannel(self, ctx, *, channel: discord.TextChannel):
         server_id = ctx.guild.id
 
@@ -144,7 +159,7 @@ class warn(commands.Cog):
         await ctx.send(log_message)
 
     @commands.command(name="delwarns", help = "Delete the warns of a user")
-    @commands.has_permissions(kick_members = True)
+    @has_mod_role()
     async def delwarns(self, ctx, member: discord.Member):
         server_id = ctx.guild.id
         query = "DELETE FROM warnings WHERE user_id = ? AND server_id = ?"

@@ -20,6 +20,7 @@ class setup(commands.Cog):
             pass
 
     @commands.command()
+    @commands.has_permissions(kick_members = True)
     async def setup(self, ctx):
         self.load_data()  # Load data from the JSON file, if available
 
@@ -47,15 +48,16 @@ class setup(commands.Cog):
         await ctx.send("Please mention the Member role.")
         message = await self.bot.wait_for('message', check=check)
         member_role = message.role_mentions[0]
-
         # Timeout role creation
-        timeout_role = await ctx.guild.create_role(name="Timeout", reason="Timeout role for temporary punishments")
+        timeout_role = discord.utils.get(ctx.guild.roles, name="Timeout")
+        if not timeout_role:
+            timeout_role = await ctx.guild.create_role(name="Timeout", reason="Timeout role for temporary punishments")
 
-        # Set permissions for the Timeout role (you can adjust these permissions as needed)
-        timeout_permissions = discord.PermissionOverwrite(send_messages=False, read_messages=True)
+            # Set permissions for the Timeout role (you can adjust these permissions as needed)
+            timeout_permissions = discord.PermissionOverwrite(send_messages=False, read_messages=True)
 
-        for channel in ctx.guild.channels:
-            await channel.set_permissions(timeout_role, overwrite=timeout_permissions)
+            for channel in ctx.guild.channels:
+                await channel.set_permissions(timeout_role, overwrite=timeout_permissions)
 
         self.setup_data[guild_id] = {
             "mod_role_id": mod_role.id,

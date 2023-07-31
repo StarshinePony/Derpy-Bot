@@ -17,6 +17,7 @@ from modules.fun import fun
 from modules.warn import warn
 from modules.economy import economy
 from modules.spam import spam
+from modules.setup import setup
 intents = discord.Intents.all()
 currentprefix = 'd!'
 bot = commands.Bot(command_prefix=currentprefix, intents=intents)
@@ -29,9 +30,11 @@ async def on_ready():
     await bot.add_cog(warn(bot))
     await bot.add_cog(economy(bot))
     await bot.add_cog(spam(bot))
+    await bot.add_cog(setup(bot))
     await bot.tree.sync(guild = discord.Object(id=authserver))
     await bot.loop.create_task(economy(bot).check_expired_worktimers())
     await bot.loop.create_task(warn(bot).check_expired_warnings())
+    print("Bot is ready!")
 
     
     

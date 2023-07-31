@@ -8,8 +8,26 @@ import sqlite3
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import dateutil.parser
+import json
 load_dotenv()
+def has_mod_role():
+    async def predicate(ctx):
+        # Load the setup data from JSON file
+        with open('setup_data.json', 'r') as file:
+            setup_data = json.load(file)
 
+        guild_id = ctx.guild.id
+        setup_info = setup_data.get(str(guild_id))
+
+        if setup_info:
+            mod_role_id = setup_info.get("mod_role_id")
+            if mod_role_id:
+                mod_role = discord.utils.get(ctx.guild.roles, id=mod_role_id)
+                return mod_role is not None and mod_role in ctx.author.roles
+
+        return False
+
+    return commands.check(predicate)
 class economy(commands.Cog):
     authserver = os.getenv("authserver")
     developerid = os.getenv("developerid")
@@ -154,7 +172,7 @@ class economy(commands.Cog):
             await ctx.send(f"Only the developer can run this command")
 
     @commands.command(name="ecogive", help = "Gives a user money")
-    @commands.has_permissions(kick_members = True)
+    @has_mod_role()
     async def ecogive(self, ctx, *, member: discord.Member, money: int):
         member_id = member.id
         server_id = ctx.guild.id
@@ -352,7 +370,7 @@ class economy(commands.Cog):
             await ctx.send("There aren't any items in the shop")
 
     @commands.command(name="removemoney", help = "Remove money from a user")
-    @commands.has_permissions(kick_members = True)
+    @has_mod_role()
     async def removemoney(self, ctx, member: discord.Member, bits: int):
         server_id = ctx.guild.id
         member_id = member.id
