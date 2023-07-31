@@ -18,7 +18,7 @@ from modules.warn import warn
 from modules.economy import economy
 from modules.spam import spam
 intents = discord.Intents.all()
-currentprefix = 'v!'
+currentprefix = 'd!'
 bot = commands.Bot(command_prefix=currentprefix, intents=intents)
 
 #register the class with the bot
