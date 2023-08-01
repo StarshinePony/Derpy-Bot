@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import dateutil.parser
 import json
+
+
 def has_mod_role():
     async def predicate(ctx):
         # Load the setup data from JSON file
@@ -28,9 +30,11 @@ def has_mod_role():
         return False
 
     return commands.check(predicate)
+
+
 class warn(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot  
+        self.bot = bot
         self.db_connection_settings = sqlite3.connect("settings.db")
         self.db_connection_settings.row_factory = sqlite3.Row
         self.db_cursor_settings = self.db_connection_settings.cursor()
@@ -65,7 +69,8 @@ class warn(commands.Cog):
         """
         self.db_cursor_warnings.execute(query)
         self.db_connection_warnings.commit()
-    @commands.command(name="warn", help = "Warn a Member")
+
+    @commands.command(name="warn", help="Warn a Member")
     @has_mod_role()
     async def warn(self, ctx, member: discord.Member, *, reason: str):
         server_id = ctx.guild.id
@@ -84,7 +89,8 @@ class warn(commands.Cog):
 
         if num_warnings >= 3:
             await ctx.guild.kick(member, reason="3 warns reached")
-    @commands.command(name="listwarns", help = "Get a list of the warns from a user")
+
+    @commands.command(name="listwarns", help="Get a list of the warns from a user")
     @has_mod_role()
     async def listwarns(self, ctx, member: discord.Member):
         server_id = ctx.guild.id
@@ -97,7 +103,8 @@ class warn(commands.Cog):
             await ctx.send(f"{member.mention} doesn't have any warnings.")
             return
 
-        embed = discord.Embed(title=f"Warnings for {member.display_name}", color=discord.Color.orange())
+        embed = discord.Embed(
+            title=f"Warnings for {member.display_name}", color=discord.Color.orange())
 
         for row in result:
             timestamp_str = row["timestamp"]
@@ -124,10 +131,10 @@ class warn(commands.Cog):
 
             embed.add_field(name="Duration", value=duration_str, inline=False)
             embed.add_field(name="Reason", value=reason, inline=False)
-            embed.add_field(name="Remaining", value=remaining_time_str, inline=False)
+            embed.add_field(name="Remaining",
+                            value=remaining_time_str, inline=False)
 
         await ctx.send(embed=embed)
-   
 
     def get_warning_count(self, member, server_id):
         query = "SELECT COUNT(*) FROM warnings WHERE user_id = ? AND server_id = ?"
@@ -135,7 +142,7 @@ class warn(commands.Cog):
         result = self.db_cursor_warnings.execute(query, values).fetchone()
         return result[0]
 
-    @commands.command(name="logchannel", help = "Setup command for logs")
+    @commands.command(name="logchannel", help="Setup command for logs")
     @has_mod_role()
     async def logchannel(self, ctx, *, channel: discord.TextChannel):
         server_id = ctx.guild.id
@@ -155,11 +162,11 @@ class warn(commands.Cog):
         self.db_connection_settings.commit()
 
         log_message = f"Logchannel was set to {channel.mention}"
-        await self.log_activity(ctx, log_message)  
+        await self.log_activity(ctx, log_message)
 
         await ctx.send(log_message)
 
-    @commands.command(name="delwarns", help = "Delete the warns of a user")
+    @commands.command(name="delwarns", help="Delete the warns of a user")
     @has_mod_role()
     async def delwarns(self, ctx, member: discord.Member):
         server_id = ctx.guild.id
@@ -168,15 +175,14 @@ class warn(commands.Cog):
         self.db_connection_warnings.commit()
         await ctx.send(f"Warnings of {member.mention} got deleted")
 
-    
     async def check_expired_warnings(self):
         while True:
             server_ids = set()
-        
 
             query = "SELECT * FROM warnings WHERE expiration <= ?"
             current_time = datetime.now()
-            expired_warnings = self.db_cursor_warnings.execute(query, (current_time,)).fetchall()
+            expired_warnings = self.db_cursor_warnings.execute(
+                query, (current_time,)).fetchall()
 
             for warning in expired_warnings:
                 server_id = warning["server_id"]
@@ -188,8 +194,3 @@ class warn(commands.Cog):
                 print("Warning deleted")
 
             await asyncio.sleep(5)
-
-    
-
-    
-

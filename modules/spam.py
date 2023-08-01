@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 import json
 import time
 
+
 def has_mod_role():
     async def predicate(ctx):
         # Load the setup data from JSON file
@@ -23,6 +24,7 @@ def has_mod_role():
 
     return commands.check(predicate)
 
+
 class spam(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -39,7 +41,7 @@ class spam(commands.Cog):
                     self.spam_pressure = {}
         except FileNotFoundError:
             self.spam_pressure = {}
-    
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
@@ -70,11 +72,14 @@ class spam(commands.Cog):
         spam_pressure_value = len(message.content) + len(message.reactions) * 5
 
         # Retrieve the user's spam pressure from the dictionary or set it to 0 if not present.
-        user_spam_data = self.spam_pressure.setdefault(server_id, {}).setdefault(user_id, {})
-        user_spam_data['spam_pressure'] = user_spam_data.get('spam_pressure', 0) + spam_pressure_value
+        user_spam_data = self.spam_pressure.setdefault(
+            server_id, {}).setdefault(user_id, {})
+        user_spam_data['spam_pressure'] = user_spam_data.get(
+            'spam_pressure', 0) + spam_pressure_value
 
         # Update the message counter for the user and save it back to the dictionary.
-        user_spam_data['message_count'] = user_spam_data.get('message_count', 0) + 1
+        user_spam_data['message_count'] = user_spam_data.get(
+            'message_count', 0) + 1
         message_count = user_spam_data['message_count']
 
         # Define the threshold for spam detection.
@@ -84,21 +89,26 @@ class spam(commands.Cog):
         if user_spam_data['spam_pressure'] >= spam_threshold:
             # Check if the user has already been given the "Timeout" role.
             if not any(role.name == 'Timeout' for role in message.author.roles):
-                timeout_role = discord.utils.get(message.author.guild.roles, name='Timeout')
+                timeout_role = discord.utils.get(
+                    message.author.guild.roles, name='Timeout')
                 if timeout_role:
                     await message.author.add_roles(timeout_role)
 
                     # Get the mod_channel_id from setup_data.json
                     with open('setup_data.json', 'r') as file:
                         setup_data = json.load(file)
-                    mod_channel_id = setup_data.get(str(server_id), {}).get("mod_channel_id")
-                    mod_role_id = setup_data.get(str(server_id), {}).get("mod_role_id")
-                    mod_role = discord.utils.get(message.guild.roles, id=mod_role_id)
+                    mod_channel_id = setup_data.get(
+                        str(server_id), {}).get("mod_channel_id")
+                    mod_role_id = setup_data.get(
+                        str(server_id), {}).get("mod_role_id")
+                    mod_role = discord.utils.get(
+                        message.guild.roles, id=mod_role_id)
                     # Send the message to the mod_channel
                     if mod_channel_id:
                         mod_channel = self.bot.get_channel(mod_channel_id)
                         if mod_channel:
-                            print(f"[SPAM INFO] User {message.author} got silenced")
+                            print(
+                                f"[SPAM INFO] User {message.author} got silenced")
                             await mod_channel.send(f"{mod_role.mention} ATTENTION!: {message.author.mention} got silenced: PRESSURE REACHED {spam_pressure_value}.")
                         else:
                             print("Error: Mod Channel not found.")
@@ -106,32 +116,39 @@ class spam(commands.Cog):
                         print("Error: Mod Channel ID not found in setup_data.json.")
 
                 else:
-                    print("The 'Timeout' role does not exist. Please create it and set the proper permissions.")
+                    print(
+                        "The 'Timeout' role does not exist. Please create it and set the proper permissions.")
 
         if user_spam_data['message_count'] >= message_threshold:
             if not any(role.name == 'Timeout' for role in message.author.roles):
-                timeout_role = discord.utils.get(message.author.guild.roles, name='Timeout')
+                timeout_role = discord.utils.get(
+                    message.author.guild.roles, name='Timeout')
                 if timeout_role:
                     await message.author.add_roles(timeout_role)
 
                     # Get the mod_channel_id from setup_data.json
                     with open('setup_data.json', 'r') as file:
                         setup_data = json.load(file)
-                    mod_channel_id = setup_data.get(str(server_id), {}).get("mod_channel_id")
-                    mod_role_id = setup_data.get(str(server_id), {}).get("mod_role_id")
-                    mod_role = discord.utils.get(message.guild.roles, id=mod_role_id)
+                    mod_channel_id = setup_data.get(
+                        str(server_id), {}).get("mod_channel_id")
+                    mod_role_id = setup_data.get(
+                        str(server_id), {}).get("mod_role_id")
+                    mod_role = discord.utils.get(
+                        message.guild.roles, id=mod_role_id)
                     # Send the message to the mod_channel
                     if mod_channel_id:
                         mod_channel = self.bot.get_channel(mod_channel_id)
                         if mod_channel:
-                            print(f"[SPAM INFO] User {message.author} got silenced")
+                            print(
+                                f"[SPAM INFO] User {message.author} got silenced")
                             await mod_channel.send(f"{mod_role.mention} ATTENTION!: {message.author.mention} got silenced: PRESSURE REACHED {message_count}")
                         else:
                             print("Error: Mod Channel not found.")
                     else:
                         print("Error: Mod Channel ID not found in setup_data.json.")
                 else:
-                    print("Error: Timeout Role doesn't exist. Bot failed to create the role: Timeout")
+                    print(
+                        "Error: Timeout Role doesn't exist. Bot failed to create the role: Timeout")
 
         # Save the updated spam pressure data to the JSON file.
         with open('spam_pressure.json', 'w') as f:
@@ -143,7 +160,8 @@ class spam(commands.Cog):
         for server_id, server_data in self.spam_pressure.copy().items():
             for user_id, user_data in server_data.copy().items():
                 if isinstance(user_data, dict):
-                    self.spam_pressure[server_id][user_id]['spam_pressure'] = max(0, user_data.get('spam_pressure', 0) - 1000)
+                    self.spam_pressure[server_id][user_id]['spam_pressure'] = max(
+                        0, user_data.get('spam_pressure', 0) - 1000)
 
         # Save the updated spam pressure data to the JSON file.
         with open('spam_pressure.json', 'w') as f:
@@ -155,7 +173,8 @@ class spam(commands.Cog):
         for server_id, server_data in self.spam_pressure.copy().items():
             for user_id, user_data in server_data.copy().items():
                 if isinstance(user_data, dict):
-                    self.spam_pressure[server_id][user_id]['message_count'] = max(0, user_data.get('message_count', 0) - 3)
+                    self.spam_pressure[server_id][user_id]['message_count'] = max(
+                        0, user_data.get('message_count', 0) - 3)
 
         # Save the updated spam pressure data to the JSON file.
         with open('spam_pressure.json', 'w') as f:
@@ -173,7 +192,8 @@ class spam(commands.Cog):
         server_id = str(ctx.guild.id)
         user_id = str(member.id)
 
-        ignored_members = self.spam_pressure.setdefault(server_id, {}).setdefault(user_id, {})
+        ignored_members = self.spam_pressure.setdefault(
+            server_id, {}).setdefault(user_id, {})
         ignored_members['ignored'] = True
 
         await ctx.send(f"Ignoring messages from {member.mention}")
@@ -189,7 +209,8 @@ class spam(commands.Cog):
         server_id = str(ctx.guild.id)
         channel_id = str(channel.id)
 
-        ignored_channels = self.spam_pressure.setdefault(server_id, {}).setdefault('ignored_channels', [])
+        ignored_channels = self.spam_pressure.setdefault(
+            server_id, {}).setdefault('ignored_channels', [])
         if channel_id in ignored_channels:
             ignored_channels.remove(channel_id)
             await ctx.send(f"Messages from {channel.mention} will no longer be ignored.")
@@ -205,7 +226,8 @@ class spam(commands.Cog):
         server_id = str(ctx.guild.id)
         role_id = str(role.id)
 
-        ignored_roles = self.spam_pressure.setdefault(server_id, {}).setdefault('ignored_roles', [])
+        ignored_roles = self.spam_pressure.setdefault(
+            server_id, {}).setdefault('ignored_roles', [])
         if role_id in ignored_roles:
             ignored_roles.remove(role_id)
             await ctx.send(f"Messages from members with the role {role.mention} will no longer be ignored.")
@@ -214,5 +236,3 @@ class spam(commands.Cog):
                 json.dump(self.spam_pressure, f)
         else:
             await ctx.send(f"Messages from members with the role {role.mention} are not being ignored.")
-
-

@@ -4,6 +4,8 @@ import requests
 import random
 from dotenv import load_dotenv
 import json
+
+
 def has_mod_role():
     async def predicate(ctx):
         # Load the setup data from JSON file
@@ -20,17 +22,17 @@ def has_mod_role():
                 return mod_role is not None and mod_role in ctx.author.roles
         else:
             await ctx.send("Pls run d!setup first!")
-            
 
         return False
 
     return commands.check(predicate)
+
+
 class fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
-    @commands.command(name="manebooru", help = "Search for pictures on Manebooru")
+    @commands.command(name="manebooru", help="Search for pictures on Manebooru")
     async def manebooru(self, ctx, search_query: str):
         url = f'https://manebooru.art/api/v1/json/search/images?q={search_query}'
 
@@ -49,7 +51,7 @@ class fun(commands.Cog):
         else:
             await ctx.send('Error occured while searching for pictures')
 
-    @commands.command(name="derpybooru", help = "Search for pictures on Derpybooru")
+    @commands.command(name="derpybooru", help="Search for pictures on Derpybooru")
     async def derpybooru(self, ctx, search_query: str):
         url = f'https://derpibooru.org/api/v1/json/search/images?q={search_query}'
 
@@ -68,11 +70,8 @@ class fun(commands.Cog):
         else:
             await ctx.send('Error occured while searching for pictures')
 
-       
-    @commands.command(name="echo", help = "Let the bot say something in a given channel")
+    @commands.command(name="echo", help="Let the bot say something in a given channel")
     @has_mod_role()
     async def echo(self, ctx, channel: discord.TextChannel, message):
         await channel.send(message)
         await ctx.send(f"{message} was sent in the channel: {channel}")
-
-    

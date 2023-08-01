@@ -2,12 +2,13 @@ import discord
 from discord.ext import commands
 import json
 
+
 class setup(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
         self.setup_data = {}
-      
+
     def save_data(self):
         with open('setup_data.json', 'w') as file:
             json.dump(self.setup_data, file)
@@ -20,7 +21,7 @@ class setup(commands.Cog):
             pass
 
     @commands.command()
-    @commands.has_permissions(kick_members = True)
+    @commands.has_permissions(kick_members=True)
     async def setup(self, ctx):
         self.load_data()  # Load data from the JSON file, if available
 
@@ -54,7 +55,8 @@ class setup(commands.Cog):
             timeout_role = await ctx.guild.create_role(name="Timeout", reason="Timeout role for temporary punishments")
 
             # Set permissions for the Timeout role (you can adjust these permissions as needed)
-            timeout_permissions = discord.PermissionOverwrite(send_messages=False, read_messages=True)
+            timeout_permissions = discord.PermissionOverwrite(
+                send_messages=False, read_messages=True)
 
             for channel in ctx.guild.channels:
                 await channel.set_permissions(timeout_role, overwrite=timeout_permissions)
@@ -69,4 +71,3 @@ class setup(commands.Cog):
         self.save_data()  # Save the data to the JSON file
 
         await ctx.send("Setup complete! Now the bot is ready to use with the provided configurations.")
-
