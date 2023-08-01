@@ -98,7 +98,7 @@ class spam(commands.Cog):
                     if mod_channel_id:
                         mod_channel = self.bot.get_channel(mod_channel_id)
                         if mod_channel:
-                            print("Worked!")
+                            print(f"[SPAM INFO] User {message.author} got silenced")
                             await mod_channel.send(f"{mod_role.mention} ATTENTION!: {message.author.mention} got silenced: PRESSURE REACHED {spam_pressure_value}.")
                         else:
                             print("Error: Mod Channel not found.")
@@ -124,7 +124,7 @@ class spam(commands.Cog):
                     if mod_channel_id:
                         mod_channel = self.bot.get_channel(mod_channel_id)
                         if mod_channel:
-                            print("woked!")
+                            print(f"[SPAM INFO] User {message.author} got silenced")
                             await mod_channel.send(f"{mod_role.mention} ATTENTION!: {message.author.mention} got silenced: PRESSURE REACHED {message_count}")
                         else:
                             print("Error: Mod Channel not found.")

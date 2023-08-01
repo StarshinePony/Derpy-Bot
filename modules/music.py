@@ -163,5 +163,5 @@ class music(commands.Cog):
                 # The bot has been idle for 5 minutes, so leave the voice channel
                 if voice_client:
                     await self.vc.disconnect()
-                    print("Bot left the voice channel due to inactivity.")
+                    print("[MUSIC INFO] Bot left the voice channel due to inactivity.")
                 await asyncio.sleep(60)  # Check again after 1 minute
