@@ -212,7 +212,7 @@ class spam(commands.Cog):
         
         await ctx.send(f"Ignoring channel {channel.mention}")
         with open("spam_pressure.json", "w") as f:
-        json.dump(self.spam_pressure, f)
+            json.dump(self.spam_pressure, f)
         
 
     @commands.command()
