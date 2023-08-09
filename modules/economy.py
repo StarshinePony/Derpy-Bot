@@ -199,6 +199,7 @@ class economy(commands.Cog):
             await ctx.send(f"{money} bits has been given to {member.mention}")
 
     @commands.command(name="worktimer", help="Sets the work time in minutes")
+    @has_mod_role()
     async def worktimer(self, ctx, *, worktime=None):
         server_id = ctx.guild.id
 
