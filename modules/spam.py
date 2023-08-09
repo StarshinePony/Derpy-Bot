@@ -18,11 +18,15 @@ def has_mod_role():
             if mod_role_id:
                 mod_role = discord.utils.get(ctx.guild.roles, id=mod_role_id)
                 return mod_role is not None and mod_role in ctx.author.roles
+            else:
+                await ctx.send("You do not have the required moderation permissions to run this command!")
         else:
             await ctx.send("Pls run d!setup first!")
+
         return False
 
     return commands.check(predicate)
+
 
 
 class spam(commands.Cog):
@@ -49,8 +53,8 @@ class spam(commands.Cog):
 
         server_id = str(message.guild.id)
         user_id = str(message.author.id)
-        ignored_roles = str(message.author.roles)
-        ignored_channels = str(message.channel)
+        ignored_roles = [str(role.id) for role in message.author.roles]
+        ignored_channel_id = str(message.channel.id)
 
         # Check if the user has the "Timeout" role and delete their messages.
         timeout_role = discord.utils.get(message.author.roles, name='Timeout')
@@ -59,13 +63,23 @@ class spam(commands.Cog):
             return
 
         # Check if the message sender is ignored by the spam module for this server.
-        if server_id in self.spam_pressure and self.spam_pressure[server_id].get(user_id, {}).get('ignored'):
-            return  # Ignore messages from ignored members for the spam module.
+        with open('setup_data.json', 'r') as file:
+            setup_data = json.load(file)
+        if setup_data:
+            mod_role_id = setup_data.get(server_id, {}).get("mod_role_id")
+            mod_channel_id = setup_data.get(server_id, {}).get("mod_channel_id")
 
-        if server_id in self.spam_pressure and self.spam_pressure[server_id].get(ignored_roles, {}).get("ignored_roles"):
+            if mod_role_id and mod_role_id in ignored_roles:
+                return  # Ignore messages from users with the mod role.
+
+            if mod_channel_id and ignored_channel_id == mod_channel_id:
+                return
+
+
+        if server_id in self.spam_pressure and self.spam_pressure[server_id].get(user_id, {}).get('ignored'):
             return
 
-        if server_id in self.spam_pressure and self.spam_pressure[server_id].get(ignored_channels, {}).get("ignored_channels"):
+        if server_id in self.spam_pressure and ignored_channel_id in self.spam_pressure[server_id].get('ignored_channels', []):
             return
 
         # Calculate spam pressure based on message length and emojis count.
@@ -200,20 +214,25 @@ class spam(commands.Cog):
         # Save the updated ignored members to the JSON file.
         with open('spam_pressure.json', 'w') as f:
             json.dump(self.spam_pressure, f)
+
     @commands.command()
     @has_mod_role()
-    async def ignore_channel(self, ctx, channel: discord.Textchannel):
+    async def ignore_channel(self, ctx, channel: discord.TextChannel):
         server_id = str(ctx.guild.id)
         channel_id = str(channel.id)
-        
+    
         ignored_channels = self.spam_pressure.setdefault(
-            server_id, {}).setdefault(channel_id, {})
-        ignored_channels["ignored"] = True
-        
-        await ctx.send(f"Ignoring channel {channel.mention}")
+            server_id, {}).setdefault('ignored_channels', [])
+    
+        if channel_id not in ignored_channels:
+            ignored_channels.append(channel_id)
+            await ctx.send(f"Ignoring messages in {channel.mention}")
+        else:
+            await ctx.send(f"Messages in {channel.mention} are already being ignored.")
+    
+        # Save the updated ignored channels to the JSON file.
         with open("spam_pressure.json", "w") as f:
             json.dump(self.spam_pressure, f)
-        
 
     @commands.command()
     @has_mod_role()
@@ -231,7 +250,7 @@ class spam(commands.Cog):
                 json.dump(self.spam_pressure, f)
         else:
             await ctx.send(f"{channel.mention} is not being ignored.")
-
+    
     @commands.command()
     @has_mod_role()
     async def unignore_role(self, ctx, role: discord.Role):

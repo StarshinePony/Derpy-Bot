@@ -26,8 +26,11 @@ def has_mod_role():
             if mod_role_id:
                 mod_role = discord.utils.get(ctx.guild.roles, id=mod_role_id)
                 return mod_role is not None and mod_role in ctx.author.roles
+            else:
+                await ctx.send("You do not have the required moderation permissions to run this command!")
         else:
             await ctx.send("Pls run d!setup first!")
+
         return False
 
     return commands.check(predicate)
@@ -172,10 +175,14 @@ class economy(commands.Cog):
 
     @commands.command(name="ecogive", help="Gives a user money")
     @has_mod_role()
-    async def ecogive(self, ctx, *, member: discord.Member, money: int):
+    async def ecogive(self, ctx, member: discord.Member):
         member_id = member.id
         server_id = ctx.guild.id
-
+        def check(message):
+                return message.content
+        await ctx.send("Please enter the amount of bits:")
+        message = await self.bot.wait_for('message', check=check)
+        money = int(message.content)
         query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
         result = self.db_cursor_economy.execute(
             query, (member_id, server_id)).fetchone()

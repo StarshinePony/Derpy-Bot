@@ -4,8 +4,10 @@ from modules.economy import economy
 from modules.warn import warn
 from modules.fun import fun
 from modules.music import music
+from modules.help import help
 import discord
 from discord.ext import commands
+from discord import app_commands
 import os
 from dotenv import load_dotenv
 import asyncio
@@ -25,6 +27,7 @@ currentprefix = 'd!'
 bot = commands.Bot(command_prefix=currentprefix, intents=intents)
 
 # register the class with the bot
+bot.remove_command("help")
 
 
 @bot.event
@@ -35,11 +38,16 @@ async def on_ready():
     await bot.add_cog(economy(bot))
     await bot.add_cog(spam(bot))
     await bot.add_cog(setup(bot))
-    print("[MAIN INFO] Bot is ready!")
+    await bot.add_cog(help(bot))
     await bot.tree.sync(guild=discord.Object(id=authserver))
+    await bot.tree.sync()
+    print(f"Synced commands")
+    print("[MAIN INFO] Bot is ready!")
     await bot.loop.create_task(economy(bot).check_expired_worktimers())
     await bot.loop.create_task(warn(bot).check_expired_warnings())
-
+    
+    
+    
 
 @bot.event
 async def on_guild_join(guild):
@@ -70,6 +78,15 @@ async def on_member_join(member):
         else:
             print("[Main ERROR]: No Setup Data available! No role was handed out!")
 
+@bot.tree.context_menu(name="whothis")
+async def whothis(interaction: discord.Interaction, member: discord.Member):
+    embed = discord.Embed(title=f"{member.name}", description=f" {member.id}")
+    embed.add_field(name="Joined Discord", value=member.created_at.strftime("%d/%m/%Y/%H:%M:%S"), inline=False)
+    embed.add_field(name="Roles", value=", ".join([role.mention for role in member.roles]), inline=False)
+    embed.add_field(name="Badges", value=", ".join([badge.name for badge in member.public_flags.all()]), inline=False)
+    embed.add_field(name="Activity", value=member.activity, inline=False)
+    embed.set_thumbnail(url=member.avatar.url)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 @bot.event
 async def on_message(message):

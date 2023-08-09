@@ -10,3 +10,7 @@ warnings.db
 worktime.db
 test.py
 .vscode
+setup_data.json
+spam_pressure.json
+username_model
+brony.py

@@ -1,10 +1,12 @@
 from discord.ext import commands
 import discord
+from discord import app_commands
 import requests
 import random
 from dotenv import load_dotenv
 import json
-
+import os
+load_dotenv
 
 def has_mod_role():
     async def predicate(ctx):
@@ -20,6 +22,8 @@ def has_mod_role():
             if mod_role_id:
                 mod_role = discord.utils.get(ctx.guild.roles, id=mod_role_id)
                 return mod_role is not None and mod_role in ctx.author.roles
+            else:
+                await ctx.send("You do not have the required moderation permissions to run this command!")
         else:
             await ctx.send("Pls run d!setup first!")
 
@@ -29,6 +33,8 @@ def has_mod_role():
 
 
 class fun(commands.Cog):
+    authserver = os.getenv("authserver")
+    developerid = os.getenv("developerid")
     def __init__(self, bot):
         self.bot = bot
 
@@ -44,7 +50,7 @@ class fun(commands.Cog):
                 image = random.choice(data['images'])
                 image_url = image['representations']['full']
                 author = image['uploader']
-                await ctx.send(f'This Image is from {author}. This person is {random.randint(1, 100)}% gay')
+                await ctx.send(f'This Image is from {author}.')
                 await ctx.send(image_url)
             else:
                 await ctx.send('No picture was found')
@@ -63,15 +69,21 @@ class fun(commands.Cog):
                 image = random.choice(data['images'])
                 image_url = image['representations']['full']
                 author = image['uploader']
-                await ctx.send(f'This Image is from {author}. This person is {random.randint(1, 100)}% gay')
+                await ctx.send(f'This Image is from {author}.')
                 await ctx.send(image_url)
             else:
                 await ctx.send('No picture was found')
         else:
             await ctx.send('Error occured while searching for pictures')
 
-    @commands.command(name="echo", help="Let the bot say something in a given channel")
+    @commands.hybrid_command(name="echo", with_app_command=True, help="Adds a new Item globaly")
+    @app_commands.guilds(discord.Object(id=authserver))
     @has_mod_role()
-    async def echo(self, ctx, channel: discord.TextChannel, message):
-        await channel.send(message)
-        await ctx.send(f"{message} was sent in the channel: {channel}")
+    async def echo(self, ctx, channel_id: discord.TextChannel, *, message: commands.clean_content):
+        channel = self.bot.get_channel(channel_id.id)
+        if channel:
+            await channel.send(message)
+            await ctx.send(f"{message} was sent in the channel: {channel.mention}")
+        else:
+            await ctx.send("Invalid channel ID. Please provide a valid text channel.")
+
