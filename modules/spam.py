@@ -200,8 +200,20 @@ class spam(commands.Cog):
         # Save the updated ignored members to the JSON file.
         with open('spam_pressure.json', 'w') as f:
             json.dump(self.spam_pressure, f)
-
-    # ... (other code in the spam class)
+    @commands.command()
+    @has_mod_role()
+    async def ignore_channel(self, ctx, channel: discord.Textchannel):
+        server_id = str(ctx.guild.id)
+        channel_id = str(channel.id)
+        
+        ignored_channels = self.spam_pressure.setdefault(
+            server_id, {}).setdefault(channel_id, {})
+        ignored_channels["ignored"] = True
+        
+        await ctx.send(f"Ignoring channel {channel.mention}")
+        with open("spam_pressure.json", "w") as f:
+        json.dump(self.spam_pressure, f)
+        
 
     @commands.command()
     @has_mod_role()
