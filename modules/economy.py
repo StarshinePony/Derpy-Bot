@@ -130,7 +130,7 @@ class economy(commands.Cog):
         self.db_connection_worktime.commit()
 
     @commands.hybrid_command(name="additem", with_app_command=True, help="Adds a new Item globaly")
-    @app_commands.guilds(discord.Object(id=1127182091914858571)) #hardcoded bc .env file broken yay i should fix that
+    @app_commands.guilds(discord.Object(id=1134635344407572570)) #hardcoded bc .env file broken yay i should fix that
     async def additem(self, ctx, *, name: str, price: int):
         user_id = ctx.author.id
         if user_id == 1014344645020495942:
