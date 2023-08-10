@@ -5,7 +5,6 @@ from discord.ext import commands
 from yt_dlp import YoutubeDL
 import asyncio
 
-
 class music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -26,8 +25,8 @@ class music(commands.Cog):
     def search_yt(self, item):
         with YoutubeDL(self.YDL_OPTIONS) as ydl:
             try:
-                info = ydl.extract_info("ytsearch:%s" %
-                                        item, download=False)['entries'][0]
+                info = ydl.extract_info(item, download=False)
+                url = info['url']
             except Exception:
                 return False
 

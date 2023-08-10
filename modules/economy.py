@@ -180,7 +180,7 @@ class economy(commands.Cog):
         server_id = ctx.guild.id
         def check(message):
                 return message.content
-        await ctx.send("Please enter the amount of bits:")
+        await ctx.send("Please enter the amount of bits to add to the user:")
         message = await self.bot.wait_for('message', check=check)
         money = int(message.content)
         query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
@@ -208,32 +208,35 @@ class economy(commands.Cog):
     @commands.command(name="worktimer", help="Sets the work time in minutes")
     @has_mod_role()
     async def worktimer(self, ctx, *, worktime=None):
-        server_id = ctx.guild.id
-
-        query = "SELECT * FROM worktime WHERE server_id = ?"
-        result = self.db_cursor_worktime.execute(
-            query, (server_id,)).fetchone()
-
-        if worktime is None:
-            if result:
-                bumms = result["worktime"]
-                await ctx.send(f"Work cooldown is {bumms}")
-            else:
-                await ctx.send("No workcooldown was set. The default cooldown is 1 hour")
+        if worktime < 1:
+            ctx.send("Worktime can't be smaller than 1")
         else:
-            if result:
-                update_query = "UPDATE worktime SET worktime = ? WHERE server_id = ?"
-                self.db_cursor_worktime.execute(
-                    update_query, (worktime, server_id))
-                self.db_connection_worktime.commit()
-                await ctx.send(f"Worktime was set to {worktime} minutes")
+            server_id = ctx.guild.id
 
+            query = "SELECT * FROM worktime WHERE server_id = ?"
+            result = self.db_cursor_worktime.execute(
+                query, (server_id,)).fetchone()
+
+            if worktime is None:
+                if result:
+                    bumms = result["worktime"]
+                    await ctx.send(f"Work cooldown is {bumms}")
+                else:
+                    await ctx.send("No workcooldown was set. The default cooldown is 1 hour")
             else:
-                insert_query = "INSERT INTO worktime (worktime, server_id) VALUES (?, ?)"
-                self.db_cursor_worktime.execute(
-                    insert_query, (worktime, server_id))
-                self.db_connection_worktime.commit()
-                await ctx.send(f"Worktime was set to {worktime} minutes")
+                if result:
+                    update_query = "UPDATE worktime SET worktime = ? WHERE server_id = ?"
+                    self.db_cursor_worktime.execute(
+                        update_query, (worktime, server_id))
+                    self.db_connection_worktime.commit()
+                    await ctx.send(f"Worktime was set to {worktime} minutes")
+
+                else:
+                    insert_query = "INSERT INTO worktime (worktime, server_id) VALUES (?, ?)"
+                    self.db_cursor_worktime.execute(
+                        insert_query, (worktime, server_id))
+                    self.db_connection_worktime.commit()
+                    await ctx.send(f"Worktime was set to {worktime} minutes")
 
     @commands.command(name="work", help="You can work every hour")
     async def work(self, ctx):
@@ -388,9 +391,14 @@ class economy(commands.Cog):
 
     @commands.command(name="removemoney", help="Remove money from a user")
     @has_mod_role()
-    async def removemoney(self, ctx, member: discord.Member, bits: int):
+    async def removemoney(self, ctx, member: discord.Member):
         server_id = ctx.guild.id
         member_id = member.id
+        def check(message):
+                return message.content
+        await ctx.send("Please enter the amount of bits to remove from the user:")
+        message = await self.bot.wait_for('message', check=check)
+        bits = int(message.content)
         query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
         result = self.db_cursor_economy.execute(
             query, (member_id, server_id)).fetchone()
@@ -411,49 +419,55 @@ class economy(commands.Cog):
 
     @commands.command(name="pay", help="Pay a user some bits")
     async def pay(self, ctx, member: discord.Member, bits: int):
-        server_id = ctx.guild.id
-        user_id = ctx.author.id
-        member_id = member.id
-        query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
-        query2 = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
-        result = self.db_cursor_economy.execute(
-            query, (user_id, server_id)).fetchone()
-        result2 = self.db_cursor_economy.execute(
-            query2, (member_id, server_id)).fetchone()
-        if result:
-
-            money1 = result["money"]
-            if result2:
-                money2 = result2["money"]
+        if bits < 0:
+            ctx.send("DONT EVEN DARE TO TRY THIS")
+        else:
+            server_id = ctx.guild.id
+            user_id = ctx.author.id
+            member_id = member.id
+            query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
+            query2 = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
+            result = self.db_cursor_economy.execute(
+                query, (user_id, server_id)).fetchone()
+            result2 = self.db_cursor_economy.execute(
+                query2, (member_id, server_id)).fetchone()
+            if member_id == user_id:
+                ctx.send("Don't dupe mone")
             else:
-                money2 = 0
-                level2 = 0
-            if money1 < bits:
-                await ctx.send("You dont have enough money to pay that amount!")
-            else:
+                if result:
 
-                money_after_payment1 = money1 - bits
-                money_after_payment2 = money2 + bits
-                query = "UPDATE economy SET money = ? WHERE user_id = ? AND server_id = ?"
-                self.db_cursor_economy.execute(
-                    query, (money_after_payment1, user_id, server_id))
-                self.db_connection_economy.commit()
-                await ctx.send(f"Paying {bits} to {member.mention}")
+                    money1 = result["money"]
+                    if result2:
+                        money2 = result2["money"]
+                    else:
+                        money2 = 0
+                        level2 = 0
+                    if money1 < bits:
+                        await ctx.send("You dont have enough money to pay that amount!")
+                    else:
 
-                if result2:
-                    query2 = "UPDATE economy SET money = ? WHERE user_id = ? AND server_id = ?"
-                    self.db_cursor_economy.execute(
-                        query2, (money_after_payment2, member_id, server_id))
-                    self.db_connection_economy.commit()
-                    await ctx.send(f"Removing bits from <@{user_id}>...")
-                    await ctx.send(f"Payment was successful")
-                else:
-                    query2 = "INSERT INTO economy (user_id, money, level, server_id) VALUES (?, ?, ?, ?)"
-                    self.db_cursor_economy.execute(
-                        query2, (member_id, money_after_payment2, level2,  server_id))
-                    self.db_connection_economy.commit()
-                    await ctx.send(f"Removing bits from <@{user_id}>...")
-                    await ctx.send(f"Payment was successful")
+                        money_after_payment1 = money1 - bits
+                        money_after_payment2 = money2 + bits
+                        query = "UPDATE economy SET money = ? WHERE user_id = ? AND server_id = ?"
+                        self.db_cursor_economy.execute(
+                            query, (money_after_payment1, user_id, server_id))
+                        self.db_connection_economy.commit()
+                        await ctx.send(f"Paying {bits} to {member.mention}")
+
+                        if result2:
+                            query2 = "UPDATE economy SET money = ? WHERE user_id = ? AND server_id = ?"
+                            self.db_cursor_economy.execute(
+                                query2, (money_after_payment2, member_id, server_id))
+                            self.db_connection_economy.commit()
+                            await ctx.send(f"Removing bits from <@{user_id}>...")
+                            await ctx.send(f"Payment was successful")
+                        else:
+                            query2 = "INSERT INTO economy (user_id, money, level, server_id) VALUES (?, ?, ?, ?)"
+                            self.db_cursor_economy.execute(
+                                query2, (member_id, money_after_payment2, level2,  server_id))
+                            self.db_connection_economy.commit()
+                            await ctx.send(f"Removing bits from <@{user_id}>...")
+                            await ctx.send(f"Payment was successful")
 
     @commands.command(name="buy", help="Buy an item")
     async def buy(self, ctx, name: str):

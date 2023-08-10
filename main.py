@@ -5,13 +5,14 @@ from modules.warn import warn
 from modules.fun import fun
 from modules.music import music
 from modules.help import help
+from modules.downloader import download
 import discord
 from discord.ext import commands
 from discord import app_commands
 import os
 from dotenv import load_dotenv
-import asyncio
-import sqlite3
+from yt_dlp import YoutubeDL
+import re
 from datetime import datetime, timedelta
 import json
 
@@ -23,7 +24,7 @@ developer = os.getenv("developerid")
 
 # import all of the cogs
 intents = discord.Intents.all()
-currentprefix = 't!'
+currentprefix = 'v!'
 bot = commands.Bot(command_prefix=currentprefix, intents=intents)
 
 # register the class with the bot
@@ -39,15 +40,13 @@ async def on_ready():
     await bot.add_cog(spam(bot))
     await bot.add_cog(setup(bot))
     await bot.add_cog(help(bot))
+    await bot.add_cog(download(bot))
     await bot.tree.sync(guild=discord.Object(id=1134635344407572570))
     await bot.tree.sync()
     print(f"Synced commands")
     print("[MAIN INFO] Bot is ready!")
     await bot.loop.create_task(economy(bot).check_expired_worktimers())
     await bot.loop.create_task(warn(bot).check_expired_warnings())
-    
-    
-    
 
 @bot.event
 async def on_guild_join(guild):
@@ -55,12 +54,10 @@ async def on_guild_join(guild):
         for channel in guild.text_channels:
             if channel.permissions_for(guild.me).send_messages:
                 print("[MAIN INFO]: Bot joined new guild!")
-                await channel.send("Thanks for adding Derpy-Bot to your server! "
+                await channel.send("Thanks for adding Trixie-Bot to your server! "
                                    "First of all, run the d!setup command to set up all your roles and channels!")
 
                 break
-
-
 @bot.event
 async def on_member_join(member):
     server_id = member.guild.id
@@ -77,7 +74,7 @@ async def on_member_join(member):
             print("[Main INFO]: Member Role given")
         else:
             print("[Main ERROR]: No Setup Data available! No role was handed out!")
-
+            
 @bot.tree.context_menu(name="whothis")
 async def whothis(interaction: discord.Interaction, member: discord.Member):
     embed = discord.Embed(title=f"{member.name}", description=f" {member.id}")
@@ -86,8 +83,7 @@ async def whothis(interaction: discord.Interaction, member: discord.Member):
     embed.add_field(name="Badges", value=", ".join([badge.name for badge in member.public_flags.all()]), inline=False)
     embed.add_field(name="Activity", value=member.activity, inline=False)
     embed.set_thumbnail(url=member.avatar.url)
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
+    await interaction.response.send_message(embed=embed)
 @bot.event
 async def on_message(message):
     # Ignore messages sent by bots to avoid command loops

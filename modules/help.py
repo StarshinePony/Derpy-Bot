@@ -49,6 +49,7 @@ class help(commands.Cog):
         embed.add_field(name="Economy", value="work\nmoney\npay\nshop\nbuy\nuse\ninventory\n", inline=False)
         embed.add_field(name="Fun Commands", value="manebooru\n", inline=False)
         embed.add_field(name="Music Commands", value="play\npause\nresume\nskip\nqueue\nclear\nleave\n", inline=False)
+        embed.add_field(name="Download Module", value="download: Only single tracks work! (For youtube: Pls use the shortened links!)")
 
         adminembed = discord.Embed(title="Trixie Admin Commands", color=discord.Color.magenta())
         adminembed.add_field(name="Setup", value="setup", inline=False)
