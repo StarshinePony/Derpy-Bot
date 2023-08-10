@@ -58,6 +58,7 @@ class fun(commands.Cog):
             await ctx.send('Error occured while searching for pictures')
 
     @commands.command(name="derpybooru", help="Search for pictures on Derpybooru")
+    @has_mod_role()
     async def derpybooru(self, ctx, search_query: str):
         url = f'https://derpibooru.org/api/v1/json/search/images?q={search_query}'
 
