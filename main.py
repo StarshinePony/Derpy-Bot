@@ -24,7 +24,7 @@ developer = os.getenv("developerid")
 
 # import all of the cogs
 intents = discord.Intents.all()
-currentprefix = 'v!'
+currentprefix = 't!'
 bot = commands.Bot(command_prefix=currentprefix, intents=intents)
 
 # register the class with the bot
@@ -74,7 +74,7 @@ async def on_member_join(member):
             print("[Main INFO]: Member Role given")
         else:
             print("[Main ERROR]: No Setup Data available! No role was handed out!")
-            
+
 @bot.tree.context_menu(name="whothis")
 async def whothis(interaction: discord.Interaction, member: discord.Member):
     embed = discord.Embed(title=f"{member.name}", description=f" {member.id}")
