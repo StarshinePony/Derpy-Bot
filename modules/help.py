@@ -47,13 +47,13 @@ class help(commands.Cog):
         embed = discord.Embed(title="Trixie User Commands", color=discord.Color.orange())
         
         embed.add_field(name="Economy", value="work\nmoney\npay\nshop\nbuy\nuse\ninventory\n", inline=False)
-        embed.add_field(name="Fun Commands", value="manebooru\nderpybooru\n", inline=False)
+        embed.add_field(name="Fun Commands", value="manebooru\n", inline=False)
         embed.add_field(name="Music Commands", value="play\npause\nresume\nskip\nqueue\nclear\nleave\n", inline=False)
 
         adminembed = discord.Embed(title="Trixie Admin Commands", color=discord.Color.magenta())
         adminembed.add_field(name="Setup", value="setup", inline=False)
         adminembed.add_field(name="Economy Management", value="ecogive\nremovemoney\nworktimer\n", inline=False)
-        adminembed.add_field(name="Fun for Admins", value="echo\n", inline=False)
+        adminembed.add_field(name="Fun for Admins", value="echo\nderpybooru\n", inline=False)
         adminembed.add_field(name="Warn Module", value="warn\nlistwarn\ndelwarn\n", inline=False)
         adminembed.add_field(name="Spam Module", value="ignore_channel\nignore_member\nunignore_channel\nunignore_member\n")
 
