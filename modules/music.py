@@ -27,6 +27,7 @@ class music(commands.Cog):
             try:
                 info = ydl.extract_info(item, download=False)
                 url = info['url']
+                
             except Exception:
                 return False
 
@@ -78,7 +79,7 @@ class music(commands.Cog):
         if songtitle == None:
             await ctx.send(f"Missing argument songtitle: Usage: play <songtitle>")
         else:
-            query = "".join(songtitle)
+            
 
             voice_channel = ctx.author.voice.channel
             if voice_channel is None:
@@ -87,11 +88,14 @@ class music(commands.Cog):
             elif self.is_paused:
                 self.vc.resume()
             else:
-                song = self.search_yt(query)
-                if type(song) == type(True):
+                with YoutubeDL(self.YDL_OPTIONS) as ydl:
+                    info = ydl.extract_info(songtitle, download=False)
+                    title = info['title']
+                    song = {'source': info['url'], 'title': info['title']}
+                if type(info) == type(True):
                     await ctx.send("Could not download the song. Incorrect format try another keyword. This could be due to playlist or a livestream format.")
                 else:
-                    await ctx.send("Song added to the queue")
+                    await ctx.send(f"Added [{title}]({songtitle}) to the queue!")
                     self.music_queue.append([song, voice_channel])
 
                     if self.is_playing == False:
