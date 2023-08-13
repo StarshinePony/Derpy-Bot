@@ -525,6 +525,21 @@ class economy(commands.Cog):
         result = self.db_cursor_user_items.execute(query, values).fetchone()
 
         if result:
+            if item_name == "Pony":
+                pony_role = discord.utils.get(ctx.guild.roles, name="Best Pony")
+                if not pony_role:
+                    pony_role = await ctx.guild.create_role(name="Best Pony", reason = "Pony role creation")
+                    await ctx.send("Failed try again (Role created)")
+                else:
+                    await ctx.send(f"Your Pony booped {member.mention}")
+                    delete_query = "DELETE FROM user_items WHERE id = ?"
+                    self.db_cursor_user_items.execute(
+                        delete_query, (result["id"],))
+                    self.db_connection_user_items.commit()
+                    boop_duration = 3000
+                    await member.add_roles(pony_role, reason="Booped!")
+                    await asyncio.sleep(boop_duration)
+                    await member.remove_roles(pony_role, reason="Boop Cooldown Ended!")
             if item_name == "Bomb":
                 # Füge dem Benutzer die Rolle "Timeout" hinzu für 5 Minuten
                 timeout_role = discord.utils.get(
@@ -532,7 +547,6 @@ class economy(commands.Cog):
                 if not timeout_role:
                     timeout_role = await ctx.guild.create_role(name="Timeout", reason="Timeout role for the bot")
                     await ctx.send("There wasn't any timeout role available. Role has been created now! Rerun the command to use the item")
-
                 else:
                     await ctx.send(f"You succesfully dropped the '{item_name}'")
                     # Lösche das Item aus der Datenbank, da es nur einmal benutzt werden kann
