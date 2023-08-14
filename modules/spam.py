@@ -182,7 +182,7 @@ class spam(commands.Cog):
             json.dump(self.spam_pressure, f)
 
     @tasks.loop(seconds=2)
-    async def decrease_message_counter(
+    async def decrease_message_counter(self):
         for server_id, server_data in self.spam_pressure.copy().items():
             for user_id, user_data in server_data.copy().items():
                 if isinstance(user_data, dict):
