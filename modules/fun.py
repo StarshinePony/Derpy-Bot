@@ -60,6 +60,8 @@ class fun(commands.Cog):
     
     @commands.command(name="manebooru", help="Search for pictures on Manebooru")
     async def manebooru(self, ctx, search_query: str):
+        prefix = str(ctx.prefix) + str(ctx.command) + ' '
+        search_query = ctx.message.content.replace(prefix, "", 1)
         url = f'https://manebooru.art/api/v1/json/search/images?q={search_query},-explicit,-suggestive,-*fetish&sf=random'
 
         await self.process_booru_command(ctx, url, 'images', '')
@@ -68,6 +70,8 @@ class fun(commands.Cog):
     @commands.command(name="derpibooru", help="Search for pictures on Derpibooru")
     @has_mod_role()
     async def derpybooru(self, ctx, search_query: str):
+        prefix = str(ctx.prefix) + str(ctx.command) + ' '
+        search_query = ctx.message.content.replace(prefix, "", 1)
         url = f'https://derpibooru.org/api/v1/json/search/images?q={search_query},-explicit,-suggestive,-*fetish&sf=random'
 
         await self.process_booru_command(ctx, url, 'images', '')
@@ -75,6 +79,8 @@ class fun(commands.Cog):
 
     @commands.command(name="twibooru", help="Search for pictures on Twibooru")
     async def twibooru(self, ctx, search_query: str):
+        prefix = str(ctx.prefix) + str(ctx.command) + ' '
+        search_query = ctx.message.content.replace(prefix, "", 1)
         url = f'https://twibooru.org//api/v3/search/posts?q={search_query},-explicit,-suggestive,-*fetish&sf=random'
 
         await self.process_booru_command(ctx, url, 'posts', '')
@@ -82,6 +88,8 @@ class fun(commands.Cog):
 
     @commands.command(name="ponerpics", help="Search for pictures on Ponerpics")
     async def ponerpics(self, ctx, search_query: str):
+        prefix = str(ctx.prefix) + str(ctx.command) + ' '
+        search_query = ctx.message.content.replace(prefix, "", 1)
         url = f'https://ponerpics.org/api/v1/json/search/images?q={search_query},-explicit,-suggestive,-*fetish&sf=random'
 
         await self.process_booru_command(ctx, url, 'images', 'https://ponerpics.org/')
@@ -89,6 +97,8 @@ class fun(commands.Cog):
 
     @commands.command(name="ponybooru", help="Search for pictures on Ponybooru")
     async def ponybooru(self, ctx, search_query: str):
+        prefix = str(ctx.prefix) + str(ctx.command) + ' '
+        search_query = ctx.message.content.replace(prefix, "", 1)
         url = f'https://ponybooru.org/api/v1/json/search/images?q={search_query},-explicit,-suggestive,-*fetish&sf=random'
 
         await self.process_booru_command(ctx, url, 'images', '')
