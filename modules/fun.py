@@ -38,44 +38,71 @@ class fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    async def process_booru_command(self, ctx, url, images, incomplete_url):
+        #main body of booru commands in separate func to avoid code repetition 
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            data = response.json()
+            if images in data and len(data[images]) > 0:
+                image = random.choice(data[images])
+                image_url = incomplete_url + image['representations']['full']
+                if 'uploader' in image:
+                    author = image['uploader']
+                else:
+                    author = 'anonymous'
+                await ctx.send(f'This Image is from {author}.')
+                await ctx.send(image_url)
+            else:
+                await ctx.send('No picture was found')
+        else:
+            await ctx.send('Error occured while searching for pictures')
+    
     @commands.command(name="manebooru", help="Search for pictures on Manebooru")
     async def manebooru(self, ctx, search_query: str):
-        url = f'https://manebooru.art/api/v1/json/search/images?q={search_query}'
+        prefix = str(ctx.prefix) + str(ctx.command) + ' '
+        search_query = ctx.message.content.replace(prefix, "", 1)
+        url = f'https://manebooru.art/api/v1/json/search/images?q={search_query},-explicit,-suggestive,-*fetish&sf=random'
 
-        response = requests.get(url)
+        await self.process_booru_command(ctx, url, 'images', '')
 
-        if response.status_code == 200:
-            data = response.json()
-            if 'images' in data and len(data['images']) > 0:
-                image = random.choice(data['images'])
-                image_url = image['representations']['full']
-                author = image['uploader']
-                await ctx.send(f'This Image is from {author}.')
-                await ctx.send(image_url)
-            else:
-                await ctx.send('No picture was found')
-        else:
-            await ctx.send('Error occured while searching for pictures')
 
-    @commands.command(name="derpybooru", help="Search for pictures on Derpybooru")
+    @commands.command(name="derpibooru", help="Search for pictures on Derpibooru")
     @has_mod_role()
     async def derpybooru(self, ctx, search_query: str):
-        url = f'https://derpibooru.org/api/v1/json/search/images?q={search_query}'
+        prefix = str(ctx.prefix) + str(ctx.command) + ' '
+        search_query = ctx.message.content.replace(prefix, "", 1)
+        url = f'https://derpibooru.org/api/v1/json/search/images?q={search_query},-explicit,-suggestive,-*fetish&sf=random'
 
-        response = requests.get(url)
+        await self.process_booru_command(ctx, url, 'images', '')
 
-        if response.status_code == 200:
-            data = response.json()
-            if 'images' in data and len(data['images']) > 0:
-                image = random.choice(data['images'])
-                image_url = image['representations']['full']
-                author = image['uploader']
-                await ctx.send(f'This Image is from {author}.')
-                await ctx.send(image_url)
-            else:
-                await ctx.send('No picture was found')
-        else:
-            await ctx.send('Error occured while searching for pictures')
+
+    @commands.command(name="twibooru", help="Search for pictures on Twibooru")
+    async def twibooru(self, ctx, search_query: str):
+        prefix = str(ctx.prefix) + str(ctx.command) + ' '
+        search_query = ctx.message.content.replace(prefix, "", 1)
+        url = f'https://twibooru.org//api/v3/search/posts?q={search_query},-explicit,-suggestive,-*fetish&sf=random'
+
+        await self.process_booru_command(ctx, url, 'posts', '')
+
+
+    @commands.command(name="ponerpics", help="Search for pictures on Ponerpics")
+    async def ponerpics(self, ctx, search_query: str):
+        prefix = str(ctx.prefix) + str(ctx.command) + ' '
+        search_query = ctx.message.content.replace(prefix, "", 1)
+        url = f'https://ponerpics.org/api/v1/json/search/images?q={search_query},-explicit,-suggestive,-*fetish&sf=random'
+
+        await self.process_booru_command(ctx, url, 'images', 'https://ponerpics.org/')
+
+
+    @commands.command(name="ponybooru", help="Search for pictures on Ponybooru")
+    async def ponybooru(self, ctx, search_query: str):
+        prefix = str(ctx.prefix) + str(ctx.command) + ' '
+        search_query = ctx.message.content.replace(prefix, "", 1)
+        url = f'https://ponybooru.org/api/v1/json/search/images?q={search_query},-explicit,-suggestive,-*fetish&sf=random'
+
+        await self.process_booru_command(ctx, url, 'images', '')
+
 
     @commands.hybrid_command(name="echo", with_app_command=True, help="Adds a new Item globaly")
     @app_commands.guilds(discord.Object(id=1134635344407572570))
@@ -87,4 +114,3 @@ class fun(commands.Cog):
             await ctx.send(f"{message} was sent in the channel: {channel.mention}")
         else:
             await ctx.send("Invalid channel ID. Please provide a valid text channel.")
-
