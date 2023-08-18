@@ -5,7 +5,8 @@ import os
 from dotenv import load_dotenv
 import json
 load_dotenv()
-developerid = 1014344645020495942
+developerid = os.getenv("developerid")
+
 def has_mod_role():
     async def predicate(ctx):
         # Load the setup data from JSON file
@@ -68,7 +69,7 @@ class help(commands.Cog):
             mod_role_id = setup_data[server_id].get('mod_role_id')
             if mod_role_id and str(mod_role_id) in user_roles:
                 await ctx.send(embed=adminembed)
-        if developerid == user_id:
+        if int(developerid) == int(user_id):
             await ctx.send(embed=devembed)
 
             

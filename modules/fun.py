@@ -6,7 +6,9 @@ import random
 from dotenv import load_dotenv
 import json
 import os
-load_dotenv
+load_dotenv()
+
+server_id = int(os.getenv("authserver"))
 
 def has_mod_role():
     async def predicate(ctx):
@@ -105,7 +107,7 @@ class fun(commands.Cog):
 
 
     @commands.hybrid_command(name="echo", with_app_command=True, help="Adds a new Item globaly")
-    @app_commands.guilds(discord.Object(id=1134635344407572570))
+    @app_commands.guilds(discord.Object(id=server_id))
     @has_mod_role()
     async def echo(self, ctx, channel_id: discord.TextChannel, *, message: commands.clean_content):
         channel = self.bot.get_channel(channel_id.id)

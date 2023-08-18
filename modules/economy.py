@@ -11,6 +11,8 @@ import dateutil.parser
 import json
 load_dotenv()
 
+developer_id = int(os.getenv("developerid"))
+server_id = int(os.getenv("authserver"))
 
 def has_mod_role():
     async def predicate(ctx):
@@ -130,11 +132,13 @@ class economy(commands.Cog):
         self.db_connection_worktime.commit()
 
     @commands.hybrid_command(name="additem", with_app_command=True, help="Adds a new Item globaly")
-    @app_commands.guilds(discord.Object(id=1134635344407572570)) #hardcoded bc .env file broken yay i should fix that
+    @app_commands.guilds(discord.Object(id=server_id))
     async def additem(self, ctx, *, name: str, price: int):
+        print("logging")
         user_id = ctx.author.id
-        if user_id == 1014344645020495942:
+        if int(user_id) == int(developer_id):
 
+            print("adding")
             query = "INSERT INTO items (name, price) VALUES (?, ?)"
             self.db_cursor_items.execute(query, (name, price))
             self.db_connection_items.commit()
@@ -147,7 +151,7 @@ class economy(commands.Cog):
     @commands.command(name="removeitem", help="Removes items globaly")
     async def removeitem(self, ctx, *, id=None):
         user_id = ctx.author.id
-        if user_id == 1014344645020495942:
+        if int(user_id) == int(developer_id):
             if id == None:
                 query = "SELECT * from items"
                 results = self.db_cursor_items.execute(query).fetchall()
