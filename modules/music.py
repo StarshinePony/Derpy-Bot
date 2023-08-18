@@ -16,6 +16,7 @@ class music(commands.Cog):
         # 2d array containing [song, channel]
         self.music_queue = []
         self.YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
+        self.YDL_SEARCH_OPTIONS = {'default_search': 'ytsearch', 'format': 'bestaudio', 'noplaylist': 'True'}
         self.FFMPEG_OPTIONS = {
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
 
@@ -88,14 +89,20 @@ class music(commands.Cog):
             elif self.is_paused:
                 self.vc.resume()
             else:
-                with YoutubeDL(self.YDL_OPTIONS) as ydl:
+                if songtitle[:4] == 'http':
+                    ydl_options = self.YDL_OPTIONS
+                else:
+                    ydl_options = self.YDL_SEARCH_OPTIONS
+                with YoutubeDL(ydl_options) as ydl:
                     info = ydl.extract_info(songtitle, download=False)
+                    if songtitle[:4] != 'http':
+                        info = info['entries'][0]
                     title = info['title']
                     song = {'source': info['url'], 'title': info['title']}
                 if type(info) == type(True):
                     await ctx.send("Could not download the song. Incorrect format try another keyword. This could be due to playlist or a livestream format.")
                 else:
-                    await ctx.send(f"Added [{title}]({songtitle}) to the queue!")
+                    await ctx.send(f"Added [{title}]({info['webpage_url']}) to the queue!")
                     self.music_queue.append([song, voice_channel])
 
                     if self.is_playing == False:
