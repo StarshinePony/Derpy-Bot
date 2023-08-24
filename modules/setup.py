@@ -44,7 +44,10 @@ class setup(commands.Cog):
             await ctx.send("Please mention the Mod channel.")
             message = await self.bot.wait_for('message', check=check)
             mod_channel = message.channel_mentions[0]
-
+            # Logging channel setup
+            await ctx.send("Please mention the logging channel.")
+            message = await self.bot.wait_for('message', check=check)
+            logging_channel = message.channel_mentions[0]
             # Member role setup
             await ctx.send("Please mention the Member role.")
             message = await self.bot.wait_for('message', check=check)
@@ -60,18 +63,29 @@ class setup(commands.Cog):
 
                 for channel in ctx.guild.channels:
                     await channel.set_permissions(timeout_role, overwrite=timeout_permissions)
+            new_pony_role = discord.utils.get(ctx.guild.roles, name="New Pony")
+            if not new_pony_role:
+                timeout_role = await ctx.guild.create_role(name="New Pony", reason="Role for new joined members for logging purpose")
+
+                # Set permissions for the Timeout role (you can adjust these permissions as needed)
+                new_pony_role_permissions = discord.PermissionOverwrite(
+                    send_messages=True, read_messages=True, attach_files=False)
+
+                for channel in ctx.guild.channels:
+                    await channel.set_permissions(new_pony_role, overwrite=new_pony_role_permissions)
 
             self.setup_data[guild_id] = {
                 "mod_role_id": mod_role.id,
                 "mod_channel_id": mod_channel.id,
                 "member_role_id": member_role.id,
-                "timeout_role_id": timeout_role.id
+                "timeout_role_id": timeout_role.id,
+                "new_pony_role_id": new_pony_role.id,
+                "logging_channel_id": logging_channel.id
             }
 
             self.save_data()  # Save the data to the JSON file
 
             await ctx.send("Setup complete! Now the bot is ready to use with the provided configurations.")
-
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
