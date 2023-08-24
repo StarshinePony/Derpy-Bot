@@ -76,17 +76,18 @@ class music(commands.Cog):
             self.is_playing = False
 
     @commands.command(name="play", help="Plays a selected song from youtube")
-    async def play(self, ctx, *, songtitle):
+    async def play(self, ctx, *, songtitle = None):
         if songtitle == None:
-            await ctx.send(f"Missing argument songtitle: Usage: play <songtitle>")
+            await ctx.send(f"Missing argument songtitle: Usage: " + str(ctx.prefix) + "play <songtitle>")
         else:
             
 
-            voice_channel = ctx.author.voice.channel
-            if voice_channel is None:
+            if not hasattr(ctx.author.voice, 'channel'):
                 # you need to be connected so that the bot knows where to go
                 await ctx.send("Connect to a voice channel!")
-            elif self.is_paused:
+                return
+            voice_channel = ctx.author.voice.channel
+            if self.is_paused:
                 self.vc.resume()
             else:
                 if songtitle[:4] == 'http':
