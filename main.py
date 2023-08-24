@@ -6,6 +6,7 @@ from modules.fun import fun
 from modules.music import music
 from modules.help import help
 from modules.downloader import download
+from modules.logger import logger
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -15,6 +16,7 @@ from yt_dlp import YoutubeDL
 import re
 from datetime import datetime, timedelta
 import json
+import asyncio
 
 load_dotenv()
 # Get the API token from the .env file.
@@ -24,7 +26,7 @@ developer = os.getenv("developerid")
 
 # import all of the cogs
 intents = discord.Intents.all()
-currentprefix = 't!'
+currentprefix = 'v!'
 bot = commands.Bot(command_prefix=currentprefix, intents=intents)
 
 # register the class with the bot
@@ -41,6 +43,7 @@ async def on_ready():
     await bot.add_cog(setup(bot))
     await bot.add_cog(help(bot))
     await bot.add_cog(download(bot))
+    await bot.add_cog(logger(bot))
     await bot.tree.sync(guild=discord.Object(id=authserver))
     await bot.tree.sync()
     print(f"Synced commands")
@@ -74,6 +77,17 @@ async def on_member_join(member):
             print("[Main INFO]: Member Role given")
         else:
             print("[Main ERROR]: No Setup Data available! No role was handed out!")
+    with open('setup_data.json', 'r') as file:
+        setup_data = json.load(file)
+        if setup_data:
+            new_pony_role = setup_data.get(
+                str(server_id), {}).get("new_pony_role_id")
+            new_pony_role = discord.utils.get(
+                member.guild.roles, id=new_pony_role)
+            await member.add_roles(new_pony_role)
+            await asyncio.sleep(86400)
+            await member.remove_roles(new_pony_role)
+            
 
 @bot.tree.context_menu(name="whothis")
 async def whothis(interaction: discord.Interaction, member: discord.Member):
