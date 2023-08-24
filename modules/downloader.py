@@ -14,20 +14,38 @@ class download(commands.Cog):
     
    
     
-    @commands.command(name="download")
-    async def download(self, ctx, songlink: str):
-        message = await ctx.send("Waiting for file download...")
+    @commands.command(name="download", help="downloads a selected song from youtube")
+    async def download(self, ctx, *, songlink: str = None):
+        if songlink == None:
+            await ctx.send(f"Missing argument songlink: Usage: " + str(ctx.prefix) + "download <songlink>")
+            return
+        await ctx.send("Waiting for file download...")
         
+        print(songlink)
         ydl_opts = {
             'format': 'bestaudio/best',
+            'noplaylist': 'True',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 }],
             'outtmpl': os.path.join("modules/", '%(title)s [%(id)s].%(ext)s'),
         }
+        if songlink[:4] != 'http':
+                    ydl_opts = {
+                        'default_search': 'ytsearch',
+                        'format': 'bestaudio/best',
+                        'noplaylist': 'True',
+                        'postprocessors': [{
+                            'key': 'FFmpegExtractAudio',
+                            'preferredcodec': 'mp3',
+                        }],
+                        'outtmpl': os.path.join("modules/", '%(title)s [%(id)s].%(ext)s'),
+                    }
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(songlink, download=True)
+            if songlink[:4] != 'http':
+                info = info['entries'][0]
             title = info['title']
             trackid = info['id']
             audio_file = f"{title} [{trackid}].mp3"
