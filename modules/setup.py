@@ -17,7 +17,7 @@ class setup(commands.Cog):
         try:
             with open('setup_data.json', 'r') as file:
                 self.setup_data = json.load(file)
-        except FileNotFoundError:
+        except (json.decoder.JSONDecodeError, FileNotFoundError):
             pass
 
     @commands.command()
