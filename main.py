@@ -9,12 +9,8 @@ from modules.downloader import download
 from modules.logger import logger
 import discord
 from discord.ext import commands
-from discord import app_commands
 import os
 from dotenv import load_dotenv
-from yt_dlp import YoutubeDL
-import re
-from datetime import datetime, timedelta
 import json
 import asyncio
 
