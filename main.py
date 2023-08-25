@@ -26,7 +26,7 @@ developer = os.getenv("developerid")
 
 # import all of the cogs
 intents = discord.Intents.all()
-currentprefix = 'v!'
+currentprefix = 't!'
 bot = commands.Bot(command_prefix=currentprefix, intents=intents)
 
 # register the class with the bot
