@@ -4,7 +4,6 @@ from discord import app_commands
 import requests
 import random
 from dotenv import load_dotenv
-import json
 import os
 from modules.backend import has_mod_role
 load_dotenv()

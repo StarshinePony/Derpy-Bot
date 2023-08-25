@@ -1,9 +1,6 @@
-from ast import alias
-from discord import app_commands
 import discord
 from discord.ext import commands
 from yt_dlp import YoutubeDL
-import asyncio
 import os
 
 

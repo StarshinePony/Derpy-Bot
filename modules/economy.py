@@ -8,7 +8,6 @@ import sqlite3
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import dateutil.parser
-import json
 from modules.backend import has_mod_role
 load_dotenv()
 
