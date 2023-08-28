@@ -2,6 +2,9 @@ from discord.ext import commands
 import discord
 import json
 import os
+import sys
+import select
+import time
 
 def has_mod_role():
     async def predicate(ctx):
@@ -32,3 +35,17 @@ def has_mod_role():
         return False
 
     return commands.check(predicate)
+
+def timed_input(prompt, timeout):
+    print(prompt)
+    start_time = time.time()
+
+    while True:
+        if time.time() - start_time > timeout:
+            print(str(timeout) + " seconds timeout reached, continuing flow to not stall the bot")
+            return None
+        inputs = [sys.stdin]
+        readable, _, _ = select.select(inputs, [], [], timeout)
+    
+        if sys.stdin in readable:
+            return sys.stdin.readline().rstrip()
