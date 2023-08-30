@@ -9,12 +9,8 @@ from modules.downloader import download
 from modules.logger import logger
 import discord
 from discord.ext import commands
-from discord import app_commands
 import os
 from dotenv import load_dotenv
-from yt_dlp import YoutubeDL
-import re
-from datetime import datetime, timedelta
 import json
 import asyncio
 
@@ -44,7 +40,7 @@ async def on_ready():
     await bot.add_cog(help(bot))
     await bot.add_cog(download(bot))
     await bot.add_cog(logger(bot))
-    await bot.tree.sync(guild=discord.Object(id=1134635344407572570))
+    await bot.tree.sync(guild=discord.Object(id=authserver))
     await bot.tree.sync()
     print(f"Synced commands")
     print("[MAIN INFO] Bot is ready!")

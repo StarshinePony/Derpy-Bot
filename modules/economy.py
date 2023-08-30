@@ -4,36 +4,15 @@ import discord
 import random
 import asyncio
 import os
-import sqlite3
+import json
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import dateutil.parser
-import json
+from modules.backend import has_mod_role, timed_input
 load_dotenv()
 
-
-def has_mod_role():
-    async def predicate(ctx):
-        # Load the setup data from JSON file
-        with open('setup_data.json', 'r') as file:
-            setup_data = json.load(file)
-
-        guild_id = ctx.guild.id
-        setup_info = setup_data.get(str(guild_id))
-
-        if setup_info:
-            mod_role_id = setup_info.get("mod_role_id")
-            if mod_role_id:
-                mod_role = discord.utils.get(ctx.guild.roles, id=mod_role_id)
-                return mod_role is not None and mod_role in ctx.author.roles
-            else:
-                await ctx.send("You do not have the required moderation permissions to run this command!")
-        else:
-            await ctx.send("Pls run d!setup first!")
-
-        return False
-
-    return commands.check(predicate)
+developer_id = int(os.getenv("developerid"))
+server_id = int(os.getenv("authserver"))
 
 
 class economy(commands.Cog):
@@ -43,102 +22,82 @@ class economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.db_connection_economy = sqlite3.connect("economy.db")
-        self.db_connection_economy.row_factory = sqlite3.Row
-        self.db_cursor_economy = self.db_connection_economy.cursor()
-        self.create_table_economy()
+        init_data = {
+            "economy": [],
+            "economytimer": [],
+            "items": [],
+            "user_items": [],
+            "worktime": []
+        }
 
-        self.db_connection_economytimer = sqlite3.connect("economytimer.db")
-        self.db_connection_economytimer.row_factory = sqlite3.Row
-        self.db_cursor_economytimer = self.db_connection_economytimer.cursor()
-        self.create_table_economytimer()
+        try:
+            #tests to ensure all categories are here
+            with open("./data/economy_data.json", "r") as json_file:
+                data = json.load(json_file)
+                if (("economy" in data) and ("economytimer" in data) and ("items" in data) and ("user_items" in data) and ("worktime" in data)):
+                    self.data = data
+                    return
+                else:
+                    #triggers when a category is missing
+                    user_input = timed_input("\033[31melements missing from economy_data.json: reset database? y/n\033[0m", 15)
+                    while (user_input != "y" and user_input != "n" and user_input != None):
+                        user_input = input("\033[31mreset database? y/n\n\033[0m")
+                    if user_input == "y":
+                        with open("./data/economy_data.json", "w") as json_file:
+                            json.dump(init_data, json_file)
+                        self.data = init_data
+                        print("\033[30;42mdatabase was reset\033[0m")
+                    else:
+                        print("\033[101mdatabse will have to be fixed manually or reset during next restart\033[0m")
+        except (FileNotFoundError):
+            #triggers when file doesn't exist
+            with open("./data/economy_data.json", "w") as json_file:
+                json.dump(init_data, json_file)
+            self.data = init_data
+            print("created economy_data.json")
+        except (json.decoder.JSONDecodeError):
+            #triggers when file is invalid
+            user_input = timed_input("\033[31merror reading from economy_data.json, file might be corrupted or mistyped: reset database? y/n\033[0m", 15)
+            while (user_input != "y" and user_input != "n" and user_input != None):
+                user_input = input("\033[31mreset database? y/n\033[0m")
+            if user_input == "y":
+                with open("./data/economy_data.json", "w") as json_file:
+                    json.dump(init_data, json_file)
+                self.data = init_data
+                print("\033[30;42mdatabase was reset\033[0m")
+            else:
+                print("\033[101mdatabse will have to be fixed manually or reset during next restart\033[0m")
 
-        self.db_connection_items = sqlite3.connect("items.db")
-        self.db_connection_items.row_factory = sqlite3.Row
-        self.db_cursor_items = self.db_connection_items.cursor()
-        self.create_table_items()
+    def save_json(self):
+        with open("./data/economy_data.json", "w") as json_file:
+            json.dump(self.data, json_file)
 
-        self.db_connection_user_items = sqlite3.connect("user_items.db")
-        self.db_connection_user_items.row_factory = sqlite3.Row
-        self.db_cursor_user_items = self.db_connection_user_items.cursor()
-        self.create_table_user_items()
-
-        self.db_connection_worktime = sqlite3.connect("worktime.db")
-        self.db_connection_worktime.row_factory = sqlite3.Row
-        self.db_cursor_worktime = self.db_connection_worktime.cursor()
-        self.create_table_worktime()
-
-    def create_table_economy(self):
-        query = """
-        CREATE TABLE IF NOT EXISTS economy (
-            id INTEGER PRIMARY KEY,
-            user_id INTEGER,
-            money INTEGER,
-            level INTEGER,
-            server_id INTEGER
-        )
-        """
-        self.db_cursor_economy.execute(query)
-        self.db_connection_economy.commit()
-
-    def create_table_economytimer(self):
-        query = """
-        CREATE TABLE IF NOT EXISTS economytimer (
-            id INTEGER PRIMARY KEY,
-            user_id INTEGER,
-            reason TEXT,
-            timestamp DATETIME,
-            expiration DATETIME,
-            server_id INTEGER
-        )
-        """
-        self.db_cursor_economytimer.execute(query)
-        self.db_connection_economytimer.commit()
-
-    def create_table_items(self):
-        query = """
-        CREATE TABLE IF NOT EXISTS items (
-            id INTEGER PRIMARY KEY,
-            name TEXT,
-            price INTEGER
-        )
-        """
-        self.db_cursor_items.execute(query)
-        self.db_connection_items.commit()
-
-    def create_table_user_items(self):
-        query = """
-        CREATE TABLE IF NOT EXISTS user_items (
-            id INTEGER PRIMARY KEY,
-            user_id INTEGER,
-            item_name TEXT,
-            server_id INTEGER
-        )
-        """
-        self.db_cursor_user_items.execute(query)
-        self.db_connection_user_items.commit()
-
-    def create_table_worktime(self):
-        query = """
-        CREATE TABLE IF NOT EXISTS worktime (
-            id INTEGER PRIMARY KEY,
-            worktime INTEGER,
-            server_id INTEGER
-        )
-        """
-        self.db_cursor_worktime.execute(query)
-        self.db_connection_worktime.commit()
+    def load_data(self):
+        with open("./data/economy_data.json", "r") as json_file:
+            self.data = json.load(json_file)
 
     @commands.hybrid_command(name="additem", with_app_command=True, help="Adds a new Item globaly")
-    @app_commands.guilds(discord.Object(id=1134635344407572570)) #hardcoded bc .env file broken yay i should fix that
-    async def additem(self, ctx, *, name: str, price: int):
+    @app_commands.guilds(discord.Object(id=server_id))
+    async def additem(self, ctx, name: str, price: int):
+        self.load_data()
+        print("logging")
         user_id = ctx.author.id
-        if user_id == 1014344645020495942:
+        if int(user_id) == int(developer_id):
 
-            query = "INSERT INTO items (name, price) VALUES (?, ?)"
-            self.db_cursor_items.execute(query, (name, price))
-            self.db_connection_items.commit()
-
+            print("adding")
+            free_id = 1
+            ids = set()
+            for item in self.data["items"]:
+                ids.add(item['id'])
+            while free_id in ids:
+                free_id += 1
+            self.data["items"].append({
+                "id" : free_id,
+                "name" : name,
+                "price" : price
+            })
+            self.save_json()
+            
             await ctx.send(f"Item added globaly: Name: {name} Price: {price}")
 
         else:
@@ -146,16 +105,16 @@ class economy(commands.Cog):
 
     @commands.command(name="removeitem", help="Removes items globaly")
     async def removeitem(self, ctx, *, id=None):
+        self.load_data()
         user_id = ctx.author.id
-        if user_id == 1014344645020495942:
+        if int(user_id) == int(developer_id):
             if id == None:
-                query = "SELECT * from items"
-                results = self.db_cursor_items.execute(query).fetchall()
+                elements = self.data["items"]
 
                 embed = discord.Embed(
                     title="IDs", description="Available item ids:", color=discord.Color.red())
 
-                for row in results:
+                for row in elements:
                     id = row["id"]
                     item_name = row["name"]
 
@@ -165,9 +124,12 @@ class economy(commands.Cog):
                 await ctx.send(embed=embed)
             else:
                 print(id)
-                query = "DELETE FROM items WHERE id = ?"
-                self.db_cursor_items.execute(query, (id))
-                self.db_connection_items.commit()
+                print(self.data['items'])
+                for value in self.data['items']:
+                    if value['id'] == int(id):
+                        self.data['items'].remove(value)
+                print(self.data['items'])
+                self.save_json()
                 await ctx.send(f"Item with id **{id}** got deleted")
 
         else:
@@ -176,6 +138,7 @@ class economy(commands.Cog):
     @commands.command(name="ecogive", help="Gives a user money")
     @has_mod_role()
     async def ecogive(self, ctx, member: discord.Member):
+        self.load_data()
         member_id = member.id
         server_id = ctx.guild.id
         def check(message):
@@ -183,92 +146,79 @@ class economy(commands.Cog):
         await ctx.send("Please enter the amount of bits to add to the user:")
         message = await self.bot.wait_for('message', check=check)
         money = int(message.content)
-        query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
-        result = self.db_cursor_economy.execute(
-            query, (member_id, server_id)).fetchone()
+        user = [values for values in self.data['economy'] if values['user_id'] == member_id and values['server_id'] == server_id]
 
-        if result:
-            current_money = result["money"]
-            new_money = current_money + money
-
-            query = "UPDATE economy SET money = ? WHERE user_id = ? AND server_id = ?"
-            self.db_cursor_economy.execute(
-                query, (new_money, member_id, server_id))
-            self.db_connection_economy.commit()
+        if user:
+            user[0]["money"] += money
+            self.save_json()
 
             await ctx.send(f"{money} bits has been given to {member.mention}")
         else:
-            query = "INSERT INTO economy (user_id, money, level, server_id) VALUES (?, ?, ?, ?)"
-            self.db_cursor_economy.execute(
-                query, (member_id, money, 1, server_id))
-            self.db_connection_economy.commit()
+            self.data["economy"].append({
+                "user_id": member_id,
+                "money": money,
+                "level": 1,
+                "server_id": server_id
+            })
+            self.save_json()
 
             await ctx.send(f"{money} bits has been given to {member.mention}")
 
     @commands.command(name="worktimer", help="Sets the work time in minutes")
     @has_mod_role()
-    async def worktimer(self, ctx, *, worktime=None):
+    async def worktimer(self, ctx, *, worktime: int = 0):
+        self.load_data()
         if worktime < 1:
-            ctx.send("Worktime can't be smaller than 1")
+            await ctx.send("Worktime can't be smaller than 1")
         else:
             server_id = ctx.guild.id
-
-            query = "SELECT * FROM worktime WHERE server_id = ?"
-            result = self.db_cursor_worktime.execute(
-                query, (server_id,)).fetchone()
+            server = [values for values in self.data['worktime'] if values['server_id'] == server_id]
 
             if worktime is None:
-                if result:
-                    bumms = result["worktime"]
+                if server:
+                    bumms = server[0]["worktime"]
                     await ctx.send(f"Work cooldown is {bumms}")
                 else:
                     await ctx.send("No workcooldown was set. The default cooldown is 1 hour")
             else:
-                if result:
-                    update_query = "UPDATE worktime SET worktime = ? WHERE server_id = ?"
-                    self.db_cursor_worktime.execute(
-                        update_query, (worktime, server_id))
-                    self.db_connection_worktime.commit()
+                if server:
+                    server[0]['worktime'] = int(worktime)
+                    self.save_json()
                     await ctx.send(f"Worktime was set to {worktime} minutes")
 
                 else:
-                    insert_query = "INSERT INTO worktime (worktime, server_id) VALUES (?, ?)"
-                    self.db_cursor_worktime.execute(
-                        insert_query, (worktime, server_id))
-                    self.db_connection_worktime.commit()
+                    self.data["worktime"].append({
+                        "worktime": int(worktime),
+                        "server_id": server_id
+                    })
+                    self.save_json()
                     await ctx.send(f"Worktime was set to {worktime} minutes")
 
     @commands.command(name="work", help="You can work every hour")
     async def work(self, ctx):
+        self.load_data()
         user_id = ctx.author.id
         server_id = ctx.guild.id
         current_time = datetime.now()
-        query3 = "SELECT * FROM worktime WHERE server_id = ?"
-        lul = self.db_connection_worktime.execute(
-            query3, (server_id,)).fetchone()
+        lul = [values for values in self.data['worktime'] if values['server_id'] == server_id]
         if lul:
-            worktime = lul["worktime"]
+            worktime = lul[0]["worktime"]
         else:
             worktime = 60
 
         expiration_time = current_time + timedelta(minutes=worktime)
-        timestamp = current_time.strftime("%Y-%m-%d %H:%M:%S")
-        ok = "Arbeit"
+        export_timestamp = current_time.timestamp()
+        ok = "work"
         level2 = random.randint(1600, 2200)
         level3 = random.randint(2200, 3100)
         level4 = random.randint(3100, 4300)
 
-        query = "SELECT * FROM economytimer WHERE user_id = ? AND server_id = ?"
-        values = (user_id, server_id)
-        result = self.db_cursor_economytimer.execute(query, values).fetchall()
+        values = [values for values in self.data['economytimer'] if values['user_id'] == user_id and values['server_id'] == server_id]
         embed = discord.Embed(title="Work", color=discord.Color.orange())
-        for row in result:
-            timestamp_str = row["timestamp"]
-            expiration_str = row["expiration"]
+        for row in values:
             current_time = datetime.now()
-
-            timestamp = dateutil.parser.parse(timestamp_str)
-            expiration = dateutil.parser.parse(expiration_str)
+            timestamp = datetime.fromtimestamp(row["timestamp"])
+            expiration = datetime.fromtimestamp(row["expiration"])
 
             duration = expiration - timestamp
             remaining_time = expiration - current_time
@@ -287,65 +237,73 @@ class economy(commands.Cog):
             embed.add_field(name="Remaining time",
                             value=remaining_time_str, inline=False)
 
-        if result:
+        if values:
             await ctx.send(embed=embed)
         else:
 
-            query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
-            result = self.db_cursor_economy.execute(
-                query, (user_id, server_id)).fetchone()
-            if result and result["level"] >= 20:
+            values = [values for values in self.data['economy'] if values['user_id'] == user_id and values['server_id'] == server_id]
+            if values:
+                values = values[0]
+            if values and values["level"] >= 20:
                 geld = level2
-                if result["level"] == 20:
+                if values["level"] == 20:
                     await ctx.send("You are now worker lvl 2")
             else:
                 geld = random.randint(900, 1200)
-            if result and result["level"] >= 60:
+            if values and values["level"] >= 60:
                 geld = level3
-                if result["level"] == 60:
+                if values["level"] == 60:
                     await ctx.send("You are now worker lvl 3")
             else:
                 geld = random.randint(900, 1200)
 
-            if result and result["level"] >= 120:
+            if values and values["level"] >= 120:
                 geld = level4
-                if result["level"] == 120:
+                if values["level"] == 120:
                     await ctx.send("You are now worker lvl 4")
             else:
                 geld = random.randint(900, 1200)
 
-            if result:
-                money = result["money"] + geld
-                level = result["level"] + 1
-                query = "UPDATE economy SET money = ? WHERE user_id = ? AND server_id = ?"
-                query2 = "UPDATE economy SET level = ? WHERE user_id = ? AND server_id = ?"
-                self.db_cursor_economy.execute(
-                    query, (money, user_id, server_id))
-                self.db_connection_economy.commit()
-                self.db_cursor_economy.execute(
-                    query2, (level, user_id, server_id))
-                self.db_connection_economy.commit()
+            if values:
+                values["money"] += geld
+                values["level"] += 1
+                self.save_json()
 
             else:
-                query = "INSERT INTO economy (user_id, money, level, server_id) VALUES (?, ?, ?, ?)"
-                self.db_cursor_economy.execute(
-                    query, (user_id, geld, 1,  server_id))
-                self.db_connection_economy.commit()
+                self.data["economy"].append({
+                    "user_id": user_id,
+                    "money": geld,
+                    "level": 1,
+                    "server_id": server_id
+                })
+                self.save_json()
 
-            query = "INSERT INTO economytimer (user_id, reason, timestamp, expiration, server_id) VALUES (?, ?, ?, ?, ?)"
-            self.db_cursor_economytimer.execute(
-                query, (user_id, ok, timestamp, expiration_time, server_id))
-            self.db_connection_economytimer.commit()
+            free_id = 1
+            ids = set()
+            for item in self.data["economytimer"]:
+                ids.add(item['id'])
+            while free_id in ids:
+                free_id += 1
+            self.data["economytimer"].append({
+                "id": free_id,
+                "user_id": user_id,
+                "reason": ok,
+                "timestamp": export_timestamp,
+                "expiration": expiration_time.timestamp(),
+                "server_id": server_id
+            })
+            self.save_json()
 
-            query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
-            result = self.db_cursor_economy.execute(
-                query, (user_id, server_id)).fetchone()
-            money = result["money"]
+            values = [values for values in self.data['economy'] if values['user_id'] == user_id and values['server_id'] == server_id]
+            if values:
+                values = values[0]
+            money = values["money"]
 
             await ctx.send(f"Work was succesful! (+{geld} Bits!) Your bits: {money} Bits")
 
     @commands.command(name="money", help="Your money")
     async def money(self, ctx, member: discord.Member = None):
+        self.load_data()
         server_id = ctx.guild.id
         if member == None:
             user_id = ctx.author.id
@@ -353,15 +311,15 @@ class economy(commands.Cog):
             user_id = member.id
             print(member)
 
-        query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
-        result = self.db_cursor_economy.execute(
-            query, (user_id, server_id)).fetchone()
+        result = [values for values in self.data['economy'] if values['user_id'] == user_id and values['server_id'] == server_id]
+        if result:
+            result = result[0]
         if member == None:
             if result:
                 money = result["money"]
                 await ctx.send(f"Your current amount of Bits: {money} Bits.")
             else:
-                await ctx.send("Du hast noch kein Geld.")
+                await ctx.send("You don't have any Bits.")
         else:
             if result:
                 money = result["money"]
@@ -371,8 +329,8 @@ class economy(commands.Cog):
 
     @commands.command(name="shop", help="Shows the shop")
     async def shop(self, ctx):
-        query = "SELECT * FROM items"
-        results = self.db_cursor_items.execute(query).fetchall()
+        self.load_data()
+        results = [values for values in self.data['items']]
 
         if results:
             embed = discord.Embed(
@@ -391,7 +349,11 @@ class economy(commands.Cog):
 
     @commands.command(name="removemoney", help="Remove money from a user")
     @has_mod_role()
-    async def removemoney(self, ctx, member: discord.Member):
+    async def removemoney(self, ctx, member: discord.Member = None):
+        if member == None:
+            await ctx.send(f"Missing argument user: Usage: " + str(ctx.prefix) + str(ctx.command) + " @<user>")
+            return
+        self.load_data()
         server_id = ctx.guild.id
         member_id = member.id
         def check(message):
@@ -399,9 +361,9 @@ class economy(commands.Cog):
         await ctx.send("Please enter the amount of bits to remove from the user:")
         message = await self.bot.wait_for('message', check=check)
         bits = int(message.content)
-        query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
-        result = self.db_cursor_economy.execute(
-            query, (member_id, server_id)).fetchone()
+        result = [values for values in self.data['economy'] if values['user_id'] == member_id and values['server_id'] == server_id]
+        if result:
+            result = result[0]
         if result:
 
             money1 = result["money"]
@@ -410,84 +372,82 @@ class economy(commands.Cog):
                 await ctx.send("The user doesn't have that much money")
             else:
 
-                money_after_payment1 = money1 - bits
-                query = "UPDATE economy SET money = ? WHERE user_id = ? AND server_id = ?"
-                self.db_cursor_economy.execute(
-                    query, (money_after_payment1, member_id, server_id))
-                self.db_connection_economy.commit()
+                result["money"] = money1 - bits
+                self.save_json()
                 await ctx.send(f"Removing {bits} from {member.mention}")
 
     @commands.command(name="pay", help="Pay a user some bits")
-    async def pay(self, ctx, member: discord.Member, bits: int):
-        if bits < 0:
-            ctx.send("DONT EVEN DARE TO TRY THIS")
+    async def pay(self, ctx, member: discord.Member = None, bits: int = None):
+        if member == None:
+            await ctx.send(f"Missing argument user: Usage: " + str(ctx.prefix) + str(ctx.command) + " @<user> <bits>")
+        elif bits == None:
+            await ctx.send(f"Missing argument bits: Usage: " + str(ctx.prefix) + str(ctx.command) + " @<user> <bits>")
         else:
-            server_id = ctx.guild.id
-            user_id = ctx.author.id
-            member_id = member.id
-            query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
-            query2 = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
-            result = self.db_cursor_economy.execute(
-                query, (user_id, server_id)).fetchone()
-            result2 = self.db_cursor_economy.execute(
-                query2, (member_id, server_id)).fetchone()
-            if member_id == user_id:
-                ctx.send("Don't dupe mone")
+            self.load_data()
+            if bits < 0:
+                await ctx.send("DONT EVEN DARE TO TRY THIS")
             else:
-                if result:
-
-                    money1 = result["money"]
-                    if result2:
-                        money2 = result2["money"]
-                    else:
-                        money2 = 0
-                        level2 = 0
-                    if money1 < bits:
-                        await ctx.send("You dont have enough money to pay that amount!")
-                    else:
-
-                        money_after_payment1 = money1 - bits
-                        money_after_payment2 = money2 + bits
-                        query = "UPDATE economy SET money = ? WHERE user_id = ? AND server_id = ?"
-                        self.db_cursor_economy.execute(
-                            query, (money_after_payment1, user_id, server_id))
-                        self.db_connection_economy.commit()
-                        await ctx.send(f"Paying {bits} to {member.mention}")
-
+                server_id = ctx.guild.id
+                user_id = ctx.author.id
+                member_id = member.id
+                if member_id == user_id:
+                    await ctx.send("Don't dupe mone")
+                else:
+                    result = [values for values in self.data['economy'] if values['user_id'] == user_id and values['server_id'] == server_id]
+                    result2 = [values for values in self.data['economy'] if values['user_id'] == member_id and values['server_id'] == server_id]
+                    if result:
+                        result = result[0]
+                        money1 = result["money"]
                         if result2:
-                            query2 = "UPDATE economy SET money = ? WHERE user_id = ? AND server_id = ?"
-                            self.db_cursor_economy.execute(
-                                query2, (money_after_payment2, member_id, server_id))
-                            self.db_connection_economy.commit()
-                            await ctx.send(f"Removing bits from <@{user_id}>...")
-                            await ctx.send(f"Payment was successful")
+                            result2 = result2[0]
+                            money2 = result2["money"]
                         else:
-                            query2 = "INSERT INTO economy (user_id, money, level, server_id) VALUES (?, ?, ?, ?)"
-                            self.db_cursor_economy.execute(
-                                query2, (member_id, money_after_payment2, level2,  server_id))
-                            self.db_connection_economy.commit()
+                            money2 = 0
+                            level2 = 1
+                        if money1 < bits:
+                            await ctx.send("You dont have enough money to pay that amount!")
+                        else:
+
+                            result["money"] = money1 - bits
                             await ctx.send(f"Removing bits from <@{user_id}>...")
-                            await ctx.send(f"Payment was successful")
+
+                            if result2:
+                                result2["money"] = money2 + bits
+                                await ctx.send(f"Paying {bits} to {member.mention}")
+                                await ctx.send(f"Payment was successful")
+                            else:
+                                self.data["economy"].append({
+                                    "user_id": member_id,
+                                    "money": money2 + bits,
+                                    "level": level2,
+                                    "server_id": server_id
+                                })
+                                await ctx.send(f"Paying {bits} to {member.mention}")
+                                await ctx.send(f"Payment was successful")
+                            self.save_json()
 
     @commands.command(name="buy", help="Buy an item")
-    async def buy(self, ctx, name: str):
+    async def buy(self, ctx, name: str = None):
+        if name == None:
+            await ctx.send(f"Missing argument name: Usage: " + str(ctx.prefix) + str(ctx.command) + " <item_name>\ntype " + str(ctx.prefix) + "shop to see available items")
+            return
+        self.load_data()
         server_id = ctx.guild.id
 
         # Check if the item is available in the shop
-        query = "SELECT * FROM items WHERE name = ?"
-        result = self.db_cursor_items.execute(query, (name,)).fetchone()
+        result = [values for values in self.data['items'] if values['name'] == name]
+        if result:
+            result = result[0]
 
         if result:
             item_price = result["price"]
             user_id = ctx.author.id
 
             # Check if the user has enough money to buy the item
-            query = "SELECT * FROM economy WHERE user_id = ? AND server_id = ?"
-            query2 = "SELECT * FROM user_items WHERE user_id = ? AND item_name = ? AND server_id = ?"
-            result = self.db_cursor_economy.execute(
-                query, (user_id, server_id)).fetchone()
-            result2 = self.db_cursor_user_items.execute(
-                query2, (user_id, name, server_id)).fetchone()
+            result = [values for values in self.data['economy'] if values['user_id'] == user_id and values['server_id'] == server_id]
+            result2 = [values for values in self.data['user_items'] if values['user_id'] == user_id and values['server_id'] == server_id and values['item_name'] == name]
+            if result:
+                result = result[0]
 
             if result:
                 user_money = result["money"]
@@ -496,79 +456,79 @@ class economy(commands.Cog):
                 else:
                     if user_money >= item_price:
                         # Update the user's money after the purchase
-                        new_money = user_money - item_price
-                        query = "UPDATE economy SET money = ? WHERE user_id = ? AND server_id = ?"
-                        self.db_cursor_economy.execute(
-                            query, (new_money, user_id, server_id))
-                        self.db_connection_economy.commit()
+                        result["money"] = user_money - item_price
 
                         # Add the purchased item to the user's inventory
-                        query = "INSERT INTO user_items (user_id, item_name, server_id) VALUES (?, ?, ?)"
-                        self.db_cursor_user_items.execute(
-                            query, (user_id, name, server_id))
-                        self.db_connection_user_items.commit()
+                        self.data["user_items"].append({
+                            "user_id": user_id,
+                            "item_name": name,
+                            "server_id": server_id
+                        })
+                        self.save_json()
 
                         await ctx.send(f"You bought the item '{name}' for {item_price} Bits.")
                     else:
                         await ctx.send("You can't afford this item")
             else:
-                await ctx.send("You don't have an entry in the database")
+                await ctx.send("You don't have an entry in the database, start earning bits to get one")
         else:
             await ctx.send(f"The item '{name}' is not available")
 
     @commands.command(name="use", help="Buy an item")
-    async def use_item(self, ctx, item_name, member: discord.Member = None):
-        server_id = ctx.guild.id
-        #    Überprüfe, ob der Benutzer das Item besitzt
-        query = "SELECT * FROM user_items WHERE user_id = ? AND item_name = ? AND server_id = ?"
-        values = (ctx.author.id, item_name, server_id)
-        result = self.db_cursor_user_items.execute(query, values).fetchone()
-
-        if result:
-            if item_name == "Pony":
-                pony_role = discord.utils.get(ctx.guild.roles, name="Best Pony")
-                if not pony_role:
-                    pony_role = await ctx.guild.create_role(name="Best Pony", reason = "Pony role creation")
-                    await ctx.send("Failed try again (Role created)")
-                else:
-                    await ctx.send(f"Your Pony booped {member.mention}")
-                    delete_query = "DELETE FROM user_items WHERE id = ?"
-                    self.db_cursor_user_items.execute(
-                        delete_query, (result["id"],))
-                    self.db_connection_user_items.commit()
-                    boop_duration = 3000
-                    await member.add_roles(pony_role, reason="Booped!")
-                    await asyncio.sleep(boop_duration)
-                    await member.remove_roles(pony_role, reason="Boop Cooldown Ended!")
-            if item_name == "Bomb":
-                # Füge dem Benutzer die Rolle "Timeout" hinzu für 5 Minuten
-                timeout_role = discord.utils.get(
-                    ctx.guild.roles, name="Timeout")
-                if not timeout_role:
-                    timeout_role = await ctx.guild.create_role(name="Timeout", reason="Timeout role for the bot")
-                    await ctx.send("There wasn't any timeout role available. Role has been created now! Rerun the command to use the item")
-                else:
-                    await ctx.send(f"You succesfully dropped the '{item_name}'")
-                    # Lösche das Item aus der Datenbank, da es nur einmal benutzt werden kann
-                    delete_query = "DELETE FROM user_items WHERE id = ?"
-                    self.db_cursor_user_items.execute(
-                        delete_query, (result["id"],))
-                    self.db_connection_user_items.commit()
-                    timeout_seconds = 300
-                    await member.add_roles(timeout_role, reason="Bomb used (5 min Timeout)")
-                    await ctx.send(f"{member.mention} cya in 5 mins lol")
-
-                    await asyncio.sleep(timeout_seconds)
-
-                    await member.remove_roles(timeout_role, reason="Timeout expired")
-            else:
-                ctx.send("You can't use that item")
-
+    async def use_item(self, ctx, item_name = None, member: discord.Member = None):
+        if item_name == None:
+            await ctx.send(f"Missing argument item_name: Usage: " + str(ctx.prefix) + str(ctx.command) + " <item_name> @<user>")
+        elif member == None:
+            await ctx.send(f"Missing argument user: Usage: " + str(ctx.prefix) + str(ctx.command) + " <item_name> @<user>")
         else:
-            await ctx.send(f"You don't own '{item_name}'")
+            self.load_data()
+            server_id = ctx.guild.id
+            # Checking if the user owns the item
+            result = [values for values in self.data['user_items'] if values['user_id'] == ctx.author.id and values['server_id'] == server_id and values['item_name'] == item_name]
+
+            if result:
+                result = result[0]
+                if item_name == "Pony":
+                    pony_role = discord.utils.get(ctx.guild.roles, name="Best Pony")
+                    if not pony_role:
+                        pony_role = await ctx.guild.create_role(name="Best Pony", reason = "Pony role creation")
+                        await ctx.send("Failed try again (Role created)")
+                    else:
+                        await ctx.send(f"Your Pony booped {member.mention}")
+                        self.data['user_items'].remove(result)
+                        self.save_json()
+                        boop_duration = 3000
+                        await member.add_roles(pony_role, reason="Booped!")
+                        await asyncio.sleep(boop_duration)
+                        await member.remove_roles(pony_role, reason="Boop Cooldown Ended!")
+                if item_name == "Bomb":
+                    # Add the "Timeout" role to the user for 5 minutes
+                    timeout_role = discord.utils.get(
+                        ctx.guild.roles, name="Timeout")
+                    if not timeout_role:
+                        timeout_role = await ctx.guild.create_role(name="Timeout", reason="Timeout role for the bot")
+                        await ctx.send("There wasn't any timeout role available. Role has been created now! Rerun the command to use the item")
+                    else:
+                        await ctx.send(f"You succesfully dropped the '{item_name}'")
+                        # Delete the item from the database as it can only be used once
+                        self.data['user_items'].remove(result)
+                        self.save_json()
+                        timeout_seconds = 300
+                        await member.add_roles(timeout_role, reason="Bomb used (5 min Timeout)")
+                        await ctx.send(f"{member.mention} cya in 5 mins lol")
+
+                        await asyncio.sleep(timeout_seconds)
+
+                        await member.remove_roles(timeout_role, reason="Timeout expired")
+                else:
+                    await ctx.send("You can't use that item")
+
+            else:
+                await ctx.send(f"You don't own '{item_name}'")
 
     @commands.command(name="inventory", help="Your inventory")
     async def inventory(self, ctx, member: discord.Member = None):
+        self.load_data()
         if member == None:
             user_id = ctx.author.id
         else:
@@ -576,9 +536,7 @@ class economy(commands.Cog):
             print(member)
 
         server_id = ctx.guild.id
-        query = "SELECT * FROM user_items WHERE user_id = ? AND server_id = ?"
-        result = self.db_cursor_user_items.execute(
-            query, (user_id, server_id)).fetchall()
+        result = [values for values in self.data['user_items'] if values['user_id'] == user_id and values['server_id'] == server_id]
 
         if result:
 
@@ -596,17 +554,17 @@ class economy(commands.Cog):
         while True:
             server_ids = set()
 
-            query = "SELECT * FROM economytimer WHERE expiration <= ?"
-            current_time = datetime.now()
-            expired_timers = self.db_cursor_economytimer.execute(
-                query, (current_time,)).fetchall()
+            current_time = datetime.now().timestamp()
+            self.load_data()
+            expired_timers = [values for values in self.data['economytimer'] if values['expiration'] <= current_time]
 
             for economytimer in expired_timers:
                 server_id = economytimer["server_id"]
                 server_ids.add(server_id)
                 timer_id = economytimer["id"]
-                delete_query = "DELETE FROM economytimer WHERE id = ?"
-                self.db_cursor_economytimer.execute(delete_query, (timer_id,))
-                self.db_connection_economytimer.commit()
+                for value in self.data['economytimer']:
+                    if value['id'] == int(timer_id):
+                        self.data['economytimer'].remove(value)
+                self.save_json()
                 print(f"The id '{timer_id}' finished working")
             await asyncio.sleep(5)

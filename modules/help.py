@@ -1,33 +1,12 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
 import os
 from dotenv import load_dotenv
 import json
 load_dotenv()
-developerid = 1014344645020495942
-def has_mod_role():
-    async def predicate(ctx):
-        # Load the setup data from JSON file
-        with open('setup_data.json', 'r') as file:
-            setup_data = json.load(file)
+developerid = os.getenv("developerid")
 
-        guild_id = ctx.guild.id
-        setup_info = setup_data.get(str(guild_id))
 
-        if setup_info:
-            mod_role_id = setup_info.get("mod_role_id")
-            if mod_role_id:
-                mod_role = discord.utils.get(ctx.guild.roles, id=mod_role_id)
-                return mod_role is not None and mod_role in ctx.author.roles
-            else:
-                await ctx.send("You do not have the required moderation permissions to run this command!")
-        else:
-            await ctx.send("Pls run d!setup first!")
-
-        return False
-
-    return commands.check(predicate)
 class help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -68,7 +47,7 @@ class help(commands.Cog):
             mod_role_id = setup_data[server_id].get('mod_role_id')
             if mod_role_id and str(mod_role_id) in user_roles:
                 await ctx.send(embed=adminembed)
-        if developerid == user_id:
+        if int(developerid) == int(user_id):
             await ctx.send(embed=devembed)
 
             
