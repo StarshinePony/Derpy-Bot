@@ -54,7 +54,7 @@ async def on_guild_join(guild):
             if channel.permissions_for(guild.me).send_messages:
                 print("[MAIN INFO]: Bot joined new guild!")
                 await channel.send("Thanks for adding Trixie-Bot to your server! "
-                                   "First of all, run the d!setup command to set up all your roles and channels!")
+                                   "First of all, run the t!setup command to set up all your roles and channels!")
 
                 break
 @bot.event

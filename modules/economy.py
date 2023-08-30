@@ -32,7 +32,7 @@ class economy(commands.Cog):
 
         try:
             #tests to ensure all categories are here
-            with open("./data/economy_data.json", "r") as json_file:
+            with open("economy_data.json", "r") as json_file:
                 data = json.load(json_file)
                 if (("economy" in data) and ("economytimer" in data) and ("items" in data) and ("user_items" in data) and ("worktime" in data)):
                     self.data = data
@@ -43,7 +43,7 @@ class economy(commands.Cog):
                     while (user_input != "y" and user_input != "n" and user_input != None):
                         user_input = input("\033[31mreset database? y/n\n\033[0m")
                     if user_input == "y":
-                        with open("./data/economy_data.json", "w") as json_file:
+                        with open("economy_data.json", "w") as json_file:
                             json.dump(init_data, json_file)
                         self.data = init_data
                         print("\033[30;42mdatabase was reset\033[0m")
@@ -51,7 +51,7 @@ class economy(commands.Cog):
                         print("\033[101mdatabse will have to be fixed manually or reset during next restart\033[0m")
         except (FileNotFoundError):
             #triggers when file doesn't exist
-            with open("./data/economy_data.json", "w") as json_file:
+            with open("economy_data.json", "w") as json_file:
                 json.dump(init_data, json_file)
             self.data = init_data
             print("created economy_data.json")
@@ -61,7 +61,7 @@ class economy(commands.Cog):
             while (user_input != "y" and user_input != "n" and user_input != None):
                 user_input = input("\033[31mreset database? y/n\033[0m")
             if user_input == "y":
-                with open("./data/economy_data.json", "w") as json_file:
+                with open("economy_data.json", "w") as json_file:
                     json.dump(init_data, json_file)
                 self.data = init_data
                 print("\033[30;42mdatabase was reset\033[0m")
@@ -69,11 +69,11 @@ class economy(commands.Cog):
                 print("\033[101mdatabse will have to be fixed manually or reset during next restart\033[0m")
 
     def save_json(self):
-        with open("./data/economy_data.json", "w") as json_file:
+        with open("economy_data.json", "w") as json_file:
             json.dump(self.data, json_file)
 
     def load_data(self):
-        with open("./data/economy_data.json", "r") as json_file:
+        with open("economy_data.json", "r") as json_file:
             self.data = json.load(json_file)
 
     @commands.hybrid_command(name="additem", with_app_command=True, help="Adds a new Item globaly")
