@@ -81,7 +81,7 @@ async def on_member_join(member):
             new_pony_role = discord.utils.get(
                 member.guild.roles, id=new_pony_role)
             await member.add_roles(new_pony_role)
-            await asyncio.sleep(86400)
+            await asyncio.sleep(10800)
             await member.remove_roles(new_pony_role)
             
 
