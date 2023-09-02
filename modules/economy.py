@@ -5,6 +5,8 @@ import random
 import asyncio
 import os
 import json
+import matplotlib.pyplot as plt
+import numpy as np
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import dateutil.parser
@@ -27,14 +29,15 @@ class economy(commands.Cog):
             "economytimer": [],
             "items": [],
             "user_items": [],
-            "worktime": []
+            "worktime": [],
+            "stocks":  []
         }
 
         try:
             #tests to ensure all categories are here
             with open("economy_data.json", "r") as json_file:
                 data = json.load(json_file)
-                if (("economy" in data) and ("economytimer" in data) and ("items" in data) and ("user_items" in data) and ("worktime" in data)):
+                if (("economy" in data) and ("economytimer" in data) and ("items" in data) and ("user_items" in data) and ("worktime" in data) and ("stocks" in data)):
                     self.data = data
                     return
                 else:
@@ -75,7 +78,230 @@ class economy(commands.Cog):
     def load_data(self):
         with open("economy_data.json", "r") as json_file:
             self.data = json.load(json_file)
+    
+    async def update_stock_prices(self):
+        while True:
+            self.load_data()  
+            for stock in self.data.get("stocks", []):
+               
+                price_change = random.uniform(-5, 5)
+                stock['current_price'] += price_change
+                stock['history'].append(stock['current_price'])
+                
+                if len(stock['history']) > 24:
+                    stock['history'].pop(1)
+                    print("Worked")
+                else:
+                    gugu: int = len(stock['history'])
+                    if gugu > 24:
+                        stock['history'].pop(-1)
+                        print("Worked")
+                    else:
+                        print("Didn't work")
+                        print(gugu)
 
+            self.save_json() 
+            await asyncio.sleep(3600)  
+    
+    @commands.hybrid_command(name="addstock", with_app_command=True, help="Adds a new stock to the marked")
+    async def add_stock(self, ctx, name: str, avg_price: float):
+    
+        for stock in self.data["stocks"]:
+            if stock['name'] == name:
+                await ctx.send(f"A stock with the name '{name}' already exists.")
+                return
+
+    
+        self.data["stocks"].append({
+            'name': name,
+            'avg_price': avg_price,
+            'current_price': avg_price,
+            'history': [avg_price] * 24 
+        })
+        self.save_json()
+        await ctx.send(f"New stock '{name}' with an average price of {avg_price} has been added.")
+    @commands.command(name="market", help = "Shows the share market")
+    async def market(self, ctx):
+        self.load_data()
+        results = [values for values in self.data['stocks']]
+
+        if results:
+            embed = discord.Embed(
+                title="Share Marked", description="Available companies:", color=discord.Color.blue())
+
+            for row in results:
+                item_name = row["name"]
+                item_price = row["current_price"]
+
+                embed.add_field(
+                    name=item_name, value=f"Price: {item_price} Bits", inline=False)
+
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("There aren't any items in the shop")
+    @commands.command(name="share_info", help="Get information about a share")
+    async def stock_info(self, ctx, stock_name: str = None):
+        self.load_data()
+
+        try:
+            stocks = self.data.get("stocks", [])  
+            if stock_name == None:
+                await ctx.send("Please provide a stock type")
+            else:
+
+           
+                for stock in stocks:
+                    if stock["name"] == stock_name:
+                        history = stock.get("history", [])
+                
+                    
+                        past_7_days = history
+
+                        if not past_7_days:
+                            
+                            price = stock.get("avg_price", 0)
+                            await ctx.send(f"No price history available for stock '{stock_name}'. Using average price: {price}")
+                            return
+
+                    
+                        x = np.arange(len(past_7_days))
+                        y = np.array(past_7_days)
+
+                    
+                        plt.plot(x, y)
+                        plt.xlabel("Days Ago")
+                        plt.ylabel("Stock Price")
+                        plt.title(f"Stock Price History for {stock_name}")
+
+                    
+                        plt.savefig("stock_graph.png")
+                        plt.close()
+
+                    
+                        name = stock['name']
+                        share_price = stock['current_price']
+                        await ctx.send(f"{name}: Current Price: {share_price} bits.")
+                        with open("stock_graph.png", "rb") as image_file:
+                            await ctx.send(file=discord.File(image_file))
+
+                    
+                        os.remove("stock_graph.png")
+
+                        return
+
+            
+            await ctx.send(f"Stock '{stock_name}' not found.")
+        except Exception as e:
+            print(e)
+            await ctx.send("An error occurred while fetching stock data.")
+
+    @commands.command(name="sell_share", help="Sell shares of a stock")
+    async def sell_share(self, ctx, stock_name: str, shares_to_sell: int):
+        self.load_data()
+
+        server_id = ctx.guild.id
+        user_id = ctx.author.id
+
+        
+        stock = [values for values in self.data['stocks'] if values['name'] == stock_name]
+
+        if not stock:
+            await ctx.send("Company not found.")
+            return
+
+        stock = stock[0] 
+
+        
+        user_entry = [values for values in self.data['economy'] if values['user_id'] == user_id and values['server_id'] == server_id]
+
+        if not user_entry:
+            await ctx.send("You don't have an economy entry. Please work first.")
+            return
+
+        user_entry = user_entry[0] 
+
+        if 'stocks' not in user_entry or stock_name not in user_entry['stocks']:
+            await ctx.send(f"You don't own any shares of {stock_name}.")
+            return
+
+        owned_shares = user_entry['stocks'][stock_name]
+
+        if shares_to_sell <= 0:
+            await ctx.send("Please enter a valid number of shares to sell.")
+            return
+
+        if shares_to_sell > owned_shares:
+            await ctx.send(f"You don't have enough shares of {stock_name} to sell {shares_to_sell} shares.")
+            return
+
+        
+        stock_price = stock['current_price']
+        sale_amount = shares_to_sell * stock_price
+
+        
+        user_entry['money'] += sale_amount
+        user_entry['stocks'][stock_name] -= shares_to_sell
+        
+        self.save_json()
+
+        await ctx.send(f"You have sold {shares_to_sell} shares of {stock_name} for {sale_amount:.2f} bits. Your balance is now {user_entry['money']:.2f} bits.")
+
+    @commands.command(name="buy_share", help="Buy some shares")
+    async def buy_stock_gpt(self, ctx, name: str, shares: int):
+        
+        self.load_data()
+
+        server_id = ctx.guild.id
+        user_id = ctx.author.id
+
+        
+        stock = [values for values in self.data['stocks'] if values['name'] == name]
+
+        if not stock:
+            await ctx.send("Stock not found.")
+            return
+
+        stock = stock[0]  
+
+        stock_price = stock['current_price']
+
+        if shares <= 0:
+            await ctx.send("Please enter a valid number of shares to buy.")
+            return
+
+        total_cost = shares * stock_price
+
+    
+        user_entry = [values for values in self.data['economy'] if values['user_id'] == user_id and values['server_id'] == server_id]
+
+        if not user_entry:
+            await ctx.send("You don't have an economy entry. Please set up an economy first.")
+            return
+
+        user_entry = user_entry[0]  
+        user_balance = user_entry['money']
+
+        if user_balance < total_cost:
+            await ctx.send("Insufficient bits.")
+            return
+
+       
+        user_entry['money'] -= total_cost
+
+        
+        if 'stocks' not in user_entry:
+            user_entry['stocks'] = {}
+
+        if name not in user_entry['stocks']:
+            user_entry['stocks'][name] = shares
+        else:
+            user_entry['stocks'][name] += shares
+       
+        
+        self.save_json()
+
+        await ctx.send(f"You have bought {shares} shares of {name} for {total_cost:.2f} bits. Your balance is now {user_entry['money']:.2f} bits.")
+    
     @commands.hybrid_command(name="additem", with_app_command=True, help="Adds a new Item globaly")
     @app_commands.guilds(discord.Object(id=server_id))
     async def additem(self, ctx, name: str, price: int):

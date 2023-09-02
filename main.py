@@ -44,12 +44,12 @@ async def on_ready():
     await bot.tree.sync()
     print(f"Synced commands")
     print("[MAIN INFO] Bot is ready!")
-    await bot.loop.create_task(economy(bot).check_expired_worktimers())
-    await bot.loop.create_task(warn(bot).check_expired_warnings())
-
+    bot.loop.create_task(economy(bot).check_expired_worktimers())
+    bot.loop.create_task(warn(bot).check_expired_warnings())
+    bot.loop.create_task(economy(bot).update_stock_prices())
 @bot.event
 async def on_guild_join(guild):
-    if guild.me == bot.user:
+    if guild.me == bot.user:    
         for channel in guild.text_channels:
             if channel.permissions_for(guild.me).send_messages:
                 print("[MAIN INFO]: Bot joined new guild!")
@@ -83,7 +83,6 @@ async def on_member_join(member):
             await member.add_roles(new_pony_role)
             await asyncio.sleep(10800)
             await member.remove_roles(new_pony_role)
-            
 
 @bot.tree.context_menu(name="whothis")
 async def whothis(interaction: discord.Interaction, member: discord.Member):

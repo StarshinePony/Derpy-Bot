@@ -28,6 +28,5 @@ class logger(commands.Cog):
                     embed = discord.Embed(color=discord.Color.magenta())
                     embed.add_field(name="Message Content", value=message.content)
                     embed.set_author(name=member.name)
-                    embed.timestamp
+                    embed.timestamp.timestamp()
                     await channel.send(embed=embed)
-                
