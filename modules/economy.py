@@ -169,9 +169,9 @@ class economy(commands.Cog):
 
                     
                         plt.plot(x, y)
-                        plt.xlabel("Days Ago")
-                        plt.ylabel("Stock Price")
-                        plt.title(f"Stock Price History for {stock_name}")
+                        plt.xlabel("Hours Ago")
+                        plt.ylabel("Share Price")
+                        plt.title(f"Share Price History for {stock_name}")
 
                     
                         plt.savefig("stock_graph.png")
