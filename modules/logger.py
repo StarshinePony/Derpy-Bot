@@ -27,6 +27,7 @@ class logger(commands.Cog):
                 if pony_id in user_roles:
                     embed = discord.Embed(color=discord.Color.magenta())
                     embed.add_field(name="Message Content", value=message.content)
-                    embed.set_author(name=member.name)
+                    embed.set_author(name=member.name, icon_url=member.avatar.url)
+                    embed.set_footer(text=f"USER ID: {member.id} | Message ID: {message.id}")
                     embed.timestamp.timestamp()
                     await channel.send(embed=embed)
