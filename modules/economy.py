@@ -99,12 +99,12 @@ class economy(commands.Cog):
                             print("bigger than 530")
                         else:
                             if current_price > 520:
-                                price_change = -1
+                                price_change = -3
                                 print(current_price)
                                 print("bigger than 520")
                             else:
                                 if current_price < 480:
-                                    price_change = 1
+                                    price_change = 3
                                     print("480")
                                 else:
                                     if current_price < 470:
