@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
-import dateutil.parser
 from modules.backend import has_mod_role, timed_input
 load_dotenv()
 
@@ -83,22 +82,56 @@ class economy(commands.Cog):
         while True:
             self.load_data()  
             for stock in self.data.get("stocks", []):
-               
-                price_change = random.uniform(-5, 5)
+                current_price: int = stock['current_price']
+                if current_price > 550:
+                    print(current_price)
+                    print("bigger than 550")
+                    price_change = random.uniform(-10, -5)
+                else:
+                    if current_price > 540:
+                        price_change = random.uniform(-8, -4)
+                        print(current_price)
+                        print("bigger than 540")
+                    else:
+                        if current_price > 530:
+                            price_change = random.uniform(-7, -3)
+                            print(current_price)
+                            print("bigger than 530")
+                        else:
+                            if current_price > 520:
+                                price_change = -1
+                                print(current_price)
+                                print("bigger than 520")
+                            else:
+                                if current_price < 480:
+                                    price_change = 1
+                                    print("480")
+                                else:
+                                    if current_price < 470:
+                                        price_change = random.uniform(3, 7)
+                                        print("470")
+                                    else:
+                                        if current_price < 460:
+                                            price_change = random.uniform(4, 8)
+                                            print("460")
+                                        else:
+                                            if current_price < 450:
+                                                price_change = random.uniform(5, 10)
+                                                print("450")
+                                            else:
+                                                price_change = random.uniform(-5, 5)
+                                                print("Normal")
                 stock['current_price'] += price_change
                 stock['history'].append(stock['current_price'])
-                
+                print(price_change)
                 if len(stock['history']) > 24:
                     stock['history'].pop(1)
                     print("Worked")
                 else:
                     gugu: int = len(stock['history'])
-                    if gugu > 24:
-                        stock['history'].pop(-1)
-                        print("Worked")
-                    else:
-                        print("Didn't work")
-                        print(gugu)
+                    
+                    print("Didn't work")
+                    print(gugu)
 
             self.save_json() 
             await asyncio.sleep(3600)  
@@ -169,7 +202,7 @@ class economy(commands.Cog):
 
                     
                         plt.plot(x, y)
-                        plt.xlabel("Hours Ago")
+                        plt.xlabel("Hours")
                         plt.ylabel("Share Price")
                         plt.title(f"Share Price History for {stock_name}")
 
