@@ -25,7 +25,7 @@ class help(commands.Cog):
 
         embed = discord.Embed(title="Trixie User Commands", color=discord.Color.orange())
         
-        embed.add_field(name="Economy", value="work\nmoney\npay\nshop\nbuy\nuse\ninventory\n", inline=False)
+        embed.add_field(name="Economy", value="work\nmoney\npay\nshop\nbuy\nuse\ninventory\nmarket\nshare_info\nsell_share\nbuy_share\n", inline=False)
         embed.add_field(name="Fun Commands", value="manebooru\ntwibooru\nponybooru\nponerpics\n", inline=False)
         embed.add_field(name="Music Commands", value="play\npause\nresume\nskip\nqueue\nclear\nleave\n", inline=False)
         embed.add_field(name="Download Module", value="download: Only single tracks work! (For youtube: Pls use the shortened links!)")
@@ -39,7 +39,7 @@ class help(commands.Cog):
 
         devembed = discord.Embed(title="Developer Only Commands", color=discord.Color.blurple())
         devembed.add_field(name="INFO", value="All dev commands are slash based commands!\nATTENTION! Commands cause global change to databases!", inline=False)
-        devembed.add_field(name="Economyshop", value="additem\nremoveitem\n", inline=False)
+        devembed.add_field(name="Economyshop", value="additem\nremoveitem\naddstock\n", inline=False)
 
         await ctx.send(embed=embed)
 
