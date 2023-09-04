@@ -582,7 +582,7 @@ class economy(commands.Cog):
                 values = values[0]
             money = values["money"]
 
-            await ctx.send(f"Work was succesful! (+{geld} Bits!) Your bits: {money} Bits")
+            await ctx.send(f"Work was successful! (+{geld} Bits!) Your bits: {money} Bits")
 
     @commands.command(name="money", help="Your money")
     async def money(self, ctx, member: discord.Member = None):
