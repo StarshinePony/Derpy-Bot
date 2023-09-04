@@ -19,10 +19,14 @@ server_id = int(os.getenv("authserver"))
 class economy(commands.Cog):
     authserver = os.getenv("authserver")
     developerid = os.getenv("developerid")
-
+    FIRST_HOUR_SLOT = 452558
+    UPDATE_SLOT = 460970
     def __init__(self, bot):
         self.bot = bot
-
+        slot_data = {
+            "current_hour_slot": 452558,
+            "update_slot": 460970
+        }
         init_data = {
             "economy": [],
             "economytimer": [],
@@ -31,8 +35,21 @@ class economy(commands.Cog):
             "worktime": [],
             "stocks":  []
         }
-
+        
         try:
+            try: #temporary solution (economy_data.json only get's generated if slot_data.json doesn't exist yet)
+                with open("slot_data.json", "r") as file:
+                    slot_data = json.load(file)
+                    if (("current_hour_slot" in slot_data) and ("update_slot" in slot_data)):
+                        self.slot_data = slot_data
+                        return
+                    else:
+                        print("Broken")
+            except (FileNotFoundError):
+                with open("slot_data.json", "w") as file:
+                    json.dump(slot_data, file)
+                self.slot_data = slot_data
+                print("created slot_data.json")
             #tests to ensure all categories are here
             with open("economy_data.json", "r") as json_file:
                 data = json.load(json_file)
@@ -69,7 +86,16 @@ class economy(commands.Cog):
                 print("\033[30;42mdatabase was reset\033[0m")
             else:
                 print("\033[101mdatabse will have to be fixed manually or reset during next restart\033[0m")
+    def save_slot(self):
+        with open('slot_data.json', 'w') as file:
+            json.dump(self.slot_data, file)
 
+    def load_slot(self):
+        try:
+            with open('slot_data.json', 'r') as file:
+                self.slot_data = json.load(file)
+        except (json.decoder.JSONDecodeError, FileNotFoundError):
+            pass
     def save_json(self):
         with open("economy_data.json", "w") as json_file:
             json.dump(self.data, json_file)
@@ -77,51 +103,34 @@ class economy(commands.Cog):
     def load_data(self):
         with open("economy_data.json", "r") as json_file:
             self.data = json.load(json_file)
-    
+    async def calculate_price_change(self, value, starting_price):
+        with open('slot_data.json', 'r') as file:
+            slot = json.load(file)
+            if slot:
+                print("All there")
+            hour_slot: int = slot['current_hour_slot']
+            update_slot: int = slot['update_slot']
+            multi = 1.0 - abs(random.gauss(0, 0.025))
+        
+            if hour_slot <= update_slot:
+                if random.choice([True, False]):
+                    multi = 1.0 / multi
+            else:
+                threshold = 0.52 if value > starting_price else 0.48
+                if random.random() > threshold:
+                    multi = 1.0 / multi
+            
+            value = float(value) 
+            multi = float(multi)           
+            return value * multi
     async def update_stock_prices(self):
         while True:
             self.load_data()  
             for stock in self.data.get("stocks", []):
-                current_price: int = stock['current_price']
-                if current_price > 550:
-                    print(current_price)
-                    print("bigger than 550")
-                    price_change = random.uniform(-10, -5)
-                else:
-                    if current_price > 540:
-                        price_change = random.uniform(-8, -4)
-                        print(current_price)
-                        print("bigger than 540")
-                    else:
-                        if current_price > 530:
-                            price_change = random.uniform(-7, -3)
-                            print(current_price)
-                            print("bigger than 530")
-                        else:
-                            if current_price > 520:
-                                price_change = -3
-                                print(current_price)
-                                print("bigger than 520")
-                            else:
-                                if current_price < 480:
-                                    price_change = 3
-                                    print("480")
-                                else:
-                                    if current_price < 470:
-                                        price_change = random.uniform(3, 7)
-                                        print("470")
-                                    else:
-                                        if current_price < 460:
-                                            price_change = random.uniform(4, 8)
-                                            print("460")
-                                        else:
-                                            if current_price < 450:
-                                                price_change = random.uniform(5, 10)
-                                                print("450")
-                                            else:
-                                                price_change = random.uniform(-5, 5)
-                                                print("Normal")
-                stock['current_price'] += price_change
+                value: int = stock['current_price']
+                starting_price: int = stock["avg_price"]
+                price_change = await self.calculate_price_change(value=value, starting_price=starting_price)
+                stock['current_price'] = price_change
                 stock['history'].append(stock['current_price'])
                 print(price_change)
                 if len(stock['history']) > 24:
@@ -160,7 +169,7 @@ class economy(commands.Cog):
 
         if results:
             embed = discord.Embed(
-                title="Share Marked", description="Available companies:", color=discord.Color.blue())
+                title="Share Market", description="Available companies:", color=discord.Color.blue())
 
             for row in results:
                 item_name = row["name"]
@@ -173,17 +182,32 @@ class economy(commands.Cog):
         else:
             await ctx.send("There aren't any items in the shop")
     @commands.command(name="share_info", help="Get information about a share")
-    async def stock_info(self, ctx, stock_name: str = None):
+    async def stock_info(self, ctx, stock_name = None):
         self.load_data()
-
+        user_id = ctx.author.id
+        server_id = ctx.guild.id
+        user_entry = next((values for values in self.data['economy'] if values['user_id'] == user_id and values['server_id'] == server_id), None)
+        owned_shares = user_entry.get('stocks', {})
+        print(owned_shares)
         try:
             stocks = self.data.get("stocks", [])  
             if stock_name == None:
                 await ctx.send("Please provide a stock type")
             else:
+                
+
 
            
                 for stock in stocks:
+                    share_current_price = stock['current_price']
+                    
+                    if stock_name in owned_shares:
+                    # Get the number of shares owned by the user for the specified stock type
+                        shares_owned = owned_shares[stock_name]
+                        total = shares_owned * share_current_price
+                        await ctx.send(f"You own {shares_owned} shares of {stock_name} for a total worth of {total} bits.")
+                    else:
+                        await ctx.send(f"You don't own any shares of {stock_name}.")
                     if stock["name"] == stock_name:
                         history = stock.get("history", [])
                 
@@ -213,7 +237,7 @@ class economy(commands.Cog):
                     
                         name = stock['name']
                         share_price = stock['current_price']
-                        await ctx.send(f"{name}: Current Price: {share_price} bits.")
+                        await ctx.send(f"Current Price of '{name}': {share_price} bits.")
                         with open("stock_graph.png", "rb") as image_file:
                             await ctx.send(file=discord.File(image_file))
 
