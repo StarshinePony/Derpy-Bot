@@ -72,7 +72,7 @@ class spam(commands.Cog):
         message_count = user_spam_data['message_count']
 
         
-        spam_threshold = 1000
+        spam_threshold = 5000
         message_threshold = 3
 
         if user_spam_data['spam_pressure'] >= spam_threshold:
