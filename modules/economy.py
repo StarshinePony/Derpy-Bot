@@ -547,6 +547,7 @@ class economy(commands.Cog):
                         
             else:
                 geld = random.randint(900, 1200)
+                
             if values["level"] == 20:
                 await ctx.send("You are now worker lvl 2")
             if values["level"] == 60:
