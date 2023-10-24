@@ -22,7 +22,7 @@ developer = os.getenv("developerid")
 
 # import all of the cogs
 intents = discord.Intents.all()
-currentprefix = 't!'
+currentprefix = 'v!'
 bot = commands.Bot(command_prefix=currentprefix, intents=intents)
 
 # register the class with the bot
@@ -46,6 +46,7 @@ async def on_ready():
     print("[MAIN INFO] Bot is ready!")
     bot.loop.create_task(economy(bot).check_expired_worktimers())
     bot.loop.create_task(warn(bot).check_expired_warnings())
+    bot.loop.create_task(economy(bot).update_hour_slot())
     bot.loop.create_task(economy(bot).update_stock_prices())
 @bot.event
 async def on_guild_join(guild):

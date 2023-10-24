@@ -19,8 +19,7 @@ class music(commands.Cog):
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
 
         self.vc = None
-
-     # searching the item on youtube
+        
     def search_yt(self, item):
         with YoutubeDL(self.YDL_OPTIONS) as ydl:
             try:
